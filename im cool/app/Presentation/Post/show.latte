@@ -4,7 +4,7 @@
 
 {if $user->isInRole('admin') || $post->user_id === $user->getId()}
     <p>
-        <a n:href="Edit:edit id => $post->id, type => 'post'" class="back-link">Upravit příspěvek</a>
+        <a n:href="PostForm:edit $post->id" class="back-link">Upravit příspěvek</a>
     </p>
 {/if}
 
@@ -77,7 +77,7 @@
                 {if $user->isInRole('admin') 
                     || (($user->isInRole('author') || $user->isInRole('user')) && $comment->user_id === $user->getId())}
                     <p>
-                        <a n:href="Post:deleteComment id => $comment->id"
+                        <a n:href="Comment:delete $comment->id"
                            onclick="return confirm('Opravdu chcete smazat tento komentář?')" class="delete-post">
                             Smazat komentář
                         </a>
