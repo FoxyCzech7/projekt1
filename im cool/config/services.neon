@@ -1,0 +1,21 @@
+services:
+    - App\Core\RouterFactory::createRouter
+    - App\Model\PostFacade
+    - App\Model\Auth\UserManager
+    - App\Model\Auth\MyAuthorizator
+    - App\Model\Posts\PostMapper
+
+    -
+        factory: App\Model\Auth\MyAuthenticator
+        autowired: self
+
+
+
+search:
+  -
+    in: %appDir%
+    classes:
+      - *Facade
+      - *Factory
+      - *Repository
+      - *Service

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>{ifset title}{include title|stripHtml} | {/ifset}Nette Web</title>
+	<link rel="stylesheet" href="{$basePath}/css/style.css">
+</head>
+
+<body>
+
+	<ul class="navig">
+		<li><a n:href="Home:">Články</a></li>
+
+		{if $user->isLoggedIn()}
+			<li><a n:href="Sign:out">Odhlásit</a></li>
+		{else}
+			<li><a n:href="Sign:in">Přihlásit</a></li>
+			<li><a n:href="Sign:register">Registrovat</a></li>
+		{/if}
+	</ul>
+
+	<!-- Výpis flash zpráv (např. úspěšné přihlášení, odhlášení apod.) -->
+	<div n:foreach="$flashes as $flash" n:class="flash, $flash->type">{$flash->message}</div>
+
+	<!-- Vlastní obsah šablony -->
+	{block content}{/block}
+
+	<!-- Skripty -->
+	{block scripts}
+		<script src="https://unpkg.com/nette-forms@3"></script>
+		<script src="{$basePath}/js/nette.ajax.js"></script>
+		<script>
+			$(function () {
+				$.nette.init();
+			});
+		</script>
+	{/block}
+</body>
+</html>

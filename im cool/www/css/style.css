@@ -1,0 +1,370 @@
+body,
+h1,
+h2,
+h3,
+p,
+ul,
+li,
+div,
+a,
+input,
+textarea,
+button {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f7f7fa;
+  color: #222;
+  line-height: 1.6;
+  padding: 0 0 40px 0;
+}
+
+h1,
+h2 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+a {
+  color: #2980b9;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover {
+  color: #1abc9c;
+  text-decoration: underline;
+}
+
+ul.navig {
+  background: #34495e;
+  padding: 10px 0;
+  margin-bottom: 30px;
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+ul.navig li {
+  display: inline;
+}
+ul.navig a {
+  color: #fff;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+ul.navig a:hover {
+  background: #1abc9c;
+  color: #fff;
+}
+
+.flash {
+  padding: 12px 20px;
+  margin: 20px auto;
+  max-width: 600px;
+  border-radius: 5px;
+  font-weight: bold;
+  background: #e1f5fe;
+  color: #0277bd;
+  border: 1px solid #b3e5fc;
+}
+.flash.success {
+  background: #e8f5e9;
+  color: #388e3c;
+  border-color: #c8e6c9;
+}
+.flash.error {
+  background: #ffebee;
+  color: #c62828;
+  border-color: #ffcdd2;
+}
+
+.post {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  padding: 24px 28px;
+  margin: 24px auto;
+  max-width: 700px;
+  border-left: 5px solid #1abc9c;
+  transition: box-shadow 0.2s;
+}
+.post:hover {
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
+}
+
+.date {
+  color: #888;
+  font-size: 0.95em;
+  margin-bottom: 8px;
+  display: inline-block;
+  margin: 8px 0 0 20px; /* odsazení zleva */
+  padding: 8px 18px;
+  background: #f4f8fb;
+  color: #2980b9;
+  border-radius: 4px;
+  border: 1px solid #b3e5fc;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.comments {
+  margin-top: 30px;
+  background: #f4f8fb;
+  border-radius: 6px;
+  padding: 18px 22px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+  text-align: left;
+}
+
+.comments p {
+  margin-bottom: 8px;
+  font-size: 1em;
+  line-height: 1.4;
+  color: #333;
+}
+
+.comments b {
+  color: #2c3e50;
+}
+
+.comments div.comment-wrapper {
+  margin-bottom: 18px;
+  padding-left: 14px;
+  border-left: 3px solid #1abc9c;
+  background: #e9f7f6;
+  border-radius: 4px;
+  box-shadow: inset 0 0 6px #b2e2db;
+  transition: background 0.3s ease;
+}
+
+.comments div.comment-wrapper:hover {
+  background: #d4f0ec;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #1a6f63;
+  margin-bottom: 4px;
+}
+
+.comment-text {
+  font-size: 0.95em;
+  color: #444;
+  white-space: pre-wrap; /* zachová nové řádky */
+  margin-bottom: 6px;
+}
+
+.comment-date {
+  font-size: 0.85em;
+  color: #888;
+  font-style: italic;
+}
+
+form {
+  margin: 24px 0;
+  background: #f9f9f9;
+  padding: 18px 22px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.05);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+form input[type='text'],
+form input[type='email'],
+form input[type='password'],
+form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+  background: #fff;
+  transition: border 0.2s;
+}
+form input:focus,
+form textarea:focus {
+  border-color: #1abc9c;
+  outline: none;
+}
+form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+form input[type='submit'],
+form button,
+form input[type='submit'] {
+  background: #1abc9c;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 1em;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+form input[type='submit']:hover,
+form button:hover {
+  background: #16a085;
+}
+
+/* --- Vylepšené styly pro nadpisy, tlačítka a zpět na homepage --- */
+h1 {
+  text-align: center;
+  font-size: 2.2em;
+  margin: 32px 0 24px 0;
+  letter-spacing: 1px;
+  color: #1abc9c;
+  font-weight: 700;
+}
+
+h2 {
+  text-align: center;
+  font-size: 1.5em;
+  margin: 6px 0 16px 0;
+  color: #2980b9;
+  font-weight: 600;
+}
+
+/* Styl pro tlačítka a odkazy jako tlačítka */
+a.button {
+  background: linear-gradient(90deg, #1abc9c 60%, #16a085 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 4px;
+  font-size: 1.1em;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(44, 62, 80, 0.07);
+  transition: background 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+a.button:hover {
+  background: linear-gradient(90deg, #16a085 60%, #1abc9c 100%);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.13);
+}
+
+/* Styl pro odkaz "Zpět na homepage" */
+.back-link {
+  display: inline-block;
+  margin: 8px 0 0 20px; /* odsazení zleva */
+  padding: 8px 18px;
+  background: #f4f8fb;
+  color: #2980b9;
+  border-radius: 4px;
+  border: 1px solid #b3e5fc;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-link:hover {
+  background: #dceefc;
+  color: #1c6391;
+}
+
+/* Tlačítka pro edit a delete komentářů */
+.delete-post {
+  display: inline-block;
+  padding: 8px 18px;
+  margin: 8px 0 0 20px; /* odsazení zleva */
+  background: #e74c3c;
+  color: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #c0392b;
+  font-weight: 500;
+}
+
+.pagination {
+  text-align: center;
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pagination a.button {
+  background: linear-gradient(90deg, #1abc9c 60%, #16a085 100%);
+  color: #fff;
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.07);
+  transition: background 0.2s, box-shadow 0.2s;
+  display: inline-block;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.pagination a.button:hover {
+  background: linear-gradient(90deg, #16a085 60%, #1abc9c 100%);
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.13);
+}
+
+.pagination strong.current-page {
+  background-color: #2980b9;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: inline-block;
+  user-select: none;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.1);
+  line-height: 1;
+}
+.comment-login-prompt {
+  font-size: 1rem;
+  color: #555;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 12px 16px;
+  border-radius: 6px;
+  max-width: 400px;
+  margin: 1em auto; /* horizontální centrování */
+  text-align: center; /* centrování textu uvnitř */
+}
+
+.comment-login-prompt a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.comment-login-prompt a:hover,
+.comment-login-prompt a:focus {
+  color: #0056b3;
+  text-decoration: underline;
+}
+.post-image {
+  max-width: 200px !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
