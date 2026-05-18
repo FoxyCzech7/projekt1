@@ -52,7 +52,7 @@ final class AdminPresenter extends Presenter
         // takže $profile by zůstal null|object i za if-blokem.
         $username = $profile->username;
         $this->userProfileFacade->deleteUser($id);
-        $this->flashMessage("Uživatel „{$username}" byl smazán.", 'success');
+        $this->flashMessage("Uživatel \"{$username}\" byl smazán.", 'success');
         $this->redirect('Admin:default');
     }
 
