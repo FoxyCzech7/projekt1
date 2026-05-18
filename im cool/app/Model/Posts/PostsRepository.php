@@ -74,6 +74,11 @@ class PostsRepository extends BaseRepository
         $this->getTable()->where('id', $id)->update($data);
     }
 
+    public function findByTitle(string $title): ?ActiveRow
+    {
+        return $this->getTable()->where('title', $title)->fetch();
+    }
+
     public function incrementLikes(int $id): void
     {
         $this->getTable()->where('id', $id)->update(['likes_count+=' => 1]);

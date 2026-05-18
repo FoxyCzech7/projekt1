@@ -40,6 +40,11 @@ final class PostFacade
         return $this->postsRepository->findById($id);
     }
 
+    public function findByTitle(string $title): ?ActiveRow
+    {
+        return $this->postsRepository->findByTitle($title);
+    }
+
     public function createPost(string $title, string $content, int $userId, ?string $image = null, bool $isPremium = false): ActiveRow
     {
         return $this->postsRepository->createPost($title, $content, $userId, $image, $isPremium);
