@@ -5,6 +5,7 @@ namespace App\Presentation\PostForm;
 use Nette;
 use Nette\Application\UI\Form;
 use App\Model\PostFacade;
+use App\Model\Premium\PremiumFacade;
 use Nette\Security\Authorizator;
 
 /**
@@ -15,6 +16,7 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
 {
     public function __construct(
         private PostFacade $postFacade,
+        private PremiumFacade $premiumFacade,
         private Authorizator $authorizator,
     ) {}
 
@@ -64,8 +66,15 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
         $form->addTextArea('content', 'Obsah:')
             ->setRequired('Zadejte prosím obsah příspěvku.');
 
-        $form->addCheckbox('is_premium', 'Prémiový příspěvek')
-            ->setOption('description', 'Obsah uvidí pouze prémiový uživatelé.');
+        // Checkbox zobrazíme jen uživatelům, kteří sami mají aktivní premium nebo jsou admin.
+        // Server-side guard v postFormSucceeded() pak ignoruje is_premium=true od ostatních,
+        // takže podvržený POST request taky nezabere.
+        if ($this->canCreatePremiumPost()) {
+            $form->addCheckbox('is_premium', 'Prémiový příspěvek')
+                ->setOption('description', 'Obsah uvidí pouze prémiové uživatelé.');
+        } else {
+            $form->addHidden('is_premium', '0');
+        }
 
         $form->addUpload('image', 'Úvodní obrázek:')
             ->setRequired(false)
@@ -101,7 +110,9 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
                 ? $this->saveImage($data->image, $uploadsDir, $id)
                 : $post->image;
 
-            $this->postFacade->updatePost($id, $data->title, $data->content, $imagePath, $data->is_premium);
+            // Server-side guard: is_premium smí být true jen pro prémiové/admin uživatele.
+            $isPremium = $this->canCreatePremiumPost() && $data->is_premium;
+            $this->postFacade->updatePost($id, $data->title, $data->content, $imagePath, $isPremium);
             $this->flashMessage('Příspěvek byl upraven.', 'success');
             $this->redirect('Post:show', $id);
         } else {
@@ -112,12 +123,13 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
             }
             // Post se vytvoří nejdřív bez obrázku, aby existovalo jeho ID
             // pro pojmenování souboru (image-{postId}.jpg).
+            $isPremium = $this->canCreatePremiumPost() && $data->is_premium;
             $newPost = $this->postFacade->createPost(
                 $data->title,
                 $data->content,
                 $this->getUser()->getId(),
                 null,
-                $data->is_premium,
+                $isPremium,
             );
             if ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk()) {
                 $imagePath = $this->saveImage($data->image, $uploadsDir, $newPost->id);
@@ -153,6 +165,17 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
         $user = $this->getUser();
         return $user->isLoggedIn()
             && ($user->isInRole('admin') || ($user->isInRole('author') && $post->user_id === $user->getId()));
+    }
+
+    /**
+     * Prémiový příspěvek smí vytvořit jen ten, kdo má sám aktivní premium nebo je admin.
+     * Admin má přístup vždy; ostatní musí mít zakoupené předplatné.
+     */
+    private function canCreatePremiumPost(): bool
+    {
+        $user = $this->getUser();
+        return $user->isInRole('admin')
+            || $this->premiumFacade->isPremium($user->getId());
     }
 
     private function isAllowed(string $resource, string $privilege): bool

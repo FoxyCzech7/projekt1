@@ -9,6 +9,7 @@
             <th>Uživatelské jméno</th>
             <th>E-mail</th>
             <th>Role</th>
+            <th>Premium</th>
             <th>Poslední přihlášení</th>
             <th>Akce</th>
         </tr>
@@ -20,6 +21,16 @@
             <td>{$u->username|escape}</td>
             <td>{$u->email|escape}</td>
             <td><span class="role-badge role-{$u->role|escape}">{$u->role|escape}</span></td>
+            <td>
+                {var $premiumUntil = isset($u->premium_until) ? $u->premium_until : null}
+                {if $premiumUntil instanceof \DateTimeInterface && $premiumUntil > new \DateTimeImmutable()}
+                    <span class="premium-status active" title="Aktivní do {$premiumUntil|date:'j. n. Y'}">
+                        ★ do {$premiumUntil|date:'j. n. Y'}
+                    </span>
+                {else}
+                    <span class="muted">—</span>
+                {/if}
+            </td>
             <td>
                 {if isset($u->last_login) && $u->last_login}
                     {$u->last_login|date:'j. n. Y H:i'}
