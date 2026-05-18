@@ -1,0 +1,57 @@
+{block content}
+
+<h1>Košík</h1>
+
+<p><a class="back-link" n:href="Premium:plans">← Zpět na výběr plánu</a></p>
+
+{if $cart}
+    <div class="cart-box">
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Předplatné</th>
+                    <th>Délka</th>
+                    <th>Cena</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Premium — {$cart['name']}</td>
+                    <td>{$cart['months']} {if $cart['months'] === 1}měsíc{elseif $cart['months'] < 5}měsíce{else}měsíců{/if}</td>
+                    <td class="cart-price">{$cart['price']} Kč</td>
+                    <td>
+                        <a n:href="Premium:removeFromCart" class="cart-remove"
+                           onclick="return confirm('Odebrat z košíku?')">Odebrat</a>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2"><strong>Celkem</strong></td>
+                    <td class="cart-price"><strong>{$cart['price']} Kč</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="cart-actions">
+            {if $user->isLoggedIn()}
+                <a n:href="Premium:checkout" class="btn-checkout">Přejít k platbě →</a>
+            {else}
+                <p class="cart-login-hint">
+                    Pro dokončení nákupu se prosím
+                    <a n:href="Sign:in">přihlaste</a> nebo <a n:href="Sign:register">zaregistrujte</a>.
+                </p>
+                <a n:href="Sign:in" class="btn-checkout">Přihlásit se a zaplatit →</a>
+            {/if}
+        </div>
+    </div>
+{else}
+    <div class="cart-empty">
+        <p>Košík je prázdný.</p>
+        <a n:href="Premium:plans" class="button">Vybrat předplatné</a>
+    </div>
+{/if}
+
+{/block}

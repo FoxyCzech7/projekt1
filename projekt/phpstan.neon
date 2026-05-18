@@ -1,0 +1,19 @@
+includes:
+#  - ../../phpstan-baseline.neon
+  - vendor/phpstan/phpstan-nette/extension.neon
+
+parameters:
+  level: max
+  parallel:
+    processTimeout: 600.0
+  paths:
+    - app
+    - www
+  reportUnmatchedIgnoredErrors: false
+  checkMissingIterableValueType: true
+  earlyTerminatingMethodCalls:
+    Nette\Application\UI\Presenter:
+      - handlePaymentError
+  ignoreErrors:
+    - "#^Cannot call method setFile\\(\\) on Nette\\\\Application\\\\UI\\\\Template\\|stdClass\\.$#"
+

@@ -1,0 +1,18 @@
+services:
+    - App\Core\RouterFactory::createRouter
+    - App\Model\Auth\UserManager
+    - App\Model\Auth\MyAuthorizator
+
+    -
+        factory: App\Model\Auth\MyAuthenticator
+        autowired: self
+
+
+search:
+  -
+    in: %appDir%
+    classes:
+      - *Facade
+      - *Factory
+      - *Repository
+      - *Service

@@ -1,0 +1,284 @@
+stages:
+  - install
+  - test
+  - deploy
+  - post_deploy
+
+########################################################################################################################
+
+.php_test_env:
+  stage: test
+  image: registry.gitlab.rtsoft.cz/rtsoft/docker/php83-debian
+  tags:
+    - rtsoft
+  before_script:
+    - eval $(ssh-agent -s)
+    - composer config -g cache-dir "$(pwd)/.composer-cache"
+    - composer-df install --no-interaction --prefer-dist
+  cache:
+    - key:
+        files:
+          - composer.lock
+      paths:
+        - .composer-cache/
+        - vendor
+
+#.nodejs_env:
+#  image: registry.gitlab.rtsoft.cz/rtsoft/docker/node:20-slim
+#  tags:
+#    - rtsoft
+#  cache:
+#    - key:
+#        files:
+#          - composer.lock
+#      paths:
+#        - vendor
+#    - key:
+#        files:
+#          - package-lock.json
+#      paths:
+#        - .npm
+#  before_script:
+#    - echo "@rtsoft:regiXstry=https://gitlab.rtsoft.cz/api/v4/packages/npm/" > .npmrc
+#    - echo "//gitlab.rtsoft.cz/:_authToken=${NPM_TOKEN}" >> .npmrc
+
+########################################################################################################################
+
+composer:install:
+  extends: .php_test_env
+  stage: install
+  script:
+    - echo "Installing composer"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "test")
+      changes:
+        - client/**/*
+    - if: $CI_COMMIT_BRANCH == "production" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "test"
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - vendor/rtsoft/baseproject/client
+      - vendor/rtsoft/datagrid/frontend/dist
+      - vendor/rtsoft/datagrid/frontend/src
+      - vendor/rtsoft/nette-form-extensions/dist
+      - vendor/uestla/recaptcha-control/assets
+
+composer:validate:
+  extends: .php_test_env
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "test")
+      changes:
+        - composer.json
+        - composer.lock
+    - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "test"
+      changes:
+        - composer.json
+        - composer.lock
+  script:
+    - composer-df validate
+
+composer:test-autoload:
+  extends: .php_test_env
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master")
+      changes:
+        - app/**/*.php
+  allow_failure: true
+  script:
+    - composer-df dump-autoload --optimize 2>&1 | grep -i "does not comply with psr-4" && exit 1 || exit 0
+
+composer:audit:
+  extends: .php_test_env
+  script:
+    - composer-df audit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+#phpcs:
+#  extends: .php_test_env
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master")
+#      changes:
+#        - app/**/*.php
+#  allow_failure: true
+#  script:
+#    - composer-df phpcs
+
+# rector:
+#   extends: .php_test_env
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master")
+#       changes:
+#         - app/**/*.php
+#   allow_failure: true
+#   script:
+#     - composer-df rector
+
+#build:
+#  extends: .nodejs_env
+#  script:
+#    - npm ci --cache .npm --prefer-offline
+#    - npm run build:prod
+#  after_script:
+#    - cp assets-manifest.json www/dist/assets-manifest.json
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "test")
+#      changes:
+#        - client/**/*
+#    - if: $CI_COMMIT_BRANCH == "production" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "test"
+#  artifacts:
+#    expire_in: 1 week
+#    paths:
+#      - www/dist
+
+#eslint:
+#  extends: .nodejs_env
+#  allow_failure: true
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "test")
+#      changes:
+#        - client/**/*
+#    - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "test"
+#      changes:
+#        - client/admin/js/**/*
+#        - client/admin/libs/**/*
+#        - client/web/js/**/*
+#  script:
+#    - npm ci --cache .npm --prefer-offline
+#    - npm run eslint
+#
+#prettier:
+#  extends: .nodejs_env
+#  allow_failure: true
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "test")
+#      changes:
+#        - client/**/*
+#    - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "test"
+#      changes:
+#        - client/admin/js/**/*
+#        - client/admin/libs/**/*
+#        - client/web/js/**/*
+#  script:
+#    - npm ci --cache .npm --prefer-offline
+#    - npm run prettier
+
+phpstan:
+  extends: .php_test_env
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "test")
+    - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "test"
+  script:
+    - composer-df phpstan
+
+#neon_lint:
+#  extends: .php_test_env
+#  rules:
+    # neon linter is executed in deploy job to ensure env config is valid, no need to run it in this job on master or production
+#    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master")
+#      changes:
+#        - app/config/**/*
+#    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
+#      changes:
+#        - app/config/**/*
+#  script:
+#    - composer-df neon-lint
+
+#latte_lint:
+#  extends: .php_test_env
+#  allow_failure: false
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master")
+#      changes:
+#        - app/**/*.latte
+#    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
+#      changes:
+#        - app/**/*.latte
+#  script:
+#    - composer-df latte-lint
+
+#npm_audit:critical:production:
+#  extends: .nodejs_env
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_COMMIT_BRANCH != "production" && $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "test")
+#    - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "test"
+#  script:
+#    - npm audit --audit-level=critical --production
+#    - npm audit --audit-level=high --production
+
+#
+# Deploy
+#
+#.deploy:
+#  stage: deploy
+#  image: registry.gitlab.rtsoft.cz/rtsoft/docker/debian-ci:latest
+#  tags:
+#    - rtsoft
+#  before_script:
+#    - eval $(ssh-agent -s)
+#    - ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 --decode)
+#  allow_failure: false
+#  resource_group: $RESOURCE_GROUP
+#  environment:
+#    name: $ENV_NAME
+#    url: $ENV_URL
+#  script:
+#    - if [ -d www/dist ]; then scp -P $SSH_PORT -rp www/dist $SSH_USER@$SSH_HOST:~/www/; fi
+#    - ssh $SSH_USER@$SSH_HOST -p $SSH_PORT "$SSH_COMMAND"
+#    - curl --insecure -s -L $ENV_URL > /dev/null
+#
+#deploy:test:
+#  extends: .deploy
+#  only:
+#    - test
+#  variables:
+#    ENV_NAME: TEST
+#    ENV_URL: $TEST_URL
+#    RESOURCE_GROUP: test_deploy
+#    SSH_USER: $TEST_SSH_USER
+#    SSH_HOST: $TEST_SSH_HOST
+#    SSH_PORT: $TEST_SSH_PORT
+#    SSH_PRIVATE_KEY: $TEST_SSH_PRIVATE_KEY
+#    SSH_COMMAND: $TEST_SSH_COMMAND
+#
+#deploy:production:
+#  extends: .deploy
+#  only:
+#    - production
+#  when: manual
+#  variables:
+#    ENV_NAME: PRODUCTION
+#    ENV_URL: $PRODUCTION_URL
+#    RESOURCE_GROUP: production_deploy
+#    SSH_USER: $PRODUCTION_SSH_USER
+#    SSH_HOST: $PRODUCTION_SSH_HOST
+#    SSH_PORT: $PRODUCTION_SSH_PORT
+#    SSH_PRIVATE_KEY: $PRODUCTION_SSH_PRIVATE_KEY
+#    SSH_COMMAND: $PRODUCTION_SSH_COMMAND
+#
+##
+## Status code check
+##
+#.status_code_check:
+#  stage: post_deploy
+#  image: registry.gitlab.rtsoft.cz/rtsoft/docker/debian-ci:latest
+#  before_script:
+#    - chmod +x ./bin/status-code-check.sh
+#  script:
+#    - ./bin/status-code-check.sh $URL $POST_DEPLOY_CHECK_URL_PATHS
+#
+#status_code_check:test:
+#  extends: .status_code_check
+#  only:
+#    - test
+#  variables:
+#    URL: $TEST_URL
+#    POST_DEPLOY_CHECK_URL_PATHS: $TEST_POST_DEPLOY_CHECK_URL_PATHS
+#
+#status_code_check:production:
+#  extends: .status_code_check
+#  only:
+#    - production
+#  variables:
+#    URL: $PRODUCTION_URL
+#    POST_DEPLOY_CHECK_URL_PATHS: $PRODUCTION_POST_DEPLOY_CHECK_URL_PATHS

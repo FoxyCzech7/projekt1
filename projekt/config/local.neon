@@ -1,0 +1,7 @@
+parameters:
+
+
+database:
+    dsn: 'mysql:host=mariadb;dbname=quickstart'
+    user: root
+    password: '123456'
