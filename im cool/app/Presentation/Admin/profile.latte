@@ -1,6 +1,16 @@
 {block content}
 
-<p><a class="back-link" n:href="Admin:default">← Zpět na seznam uživatelů</a></p>
+<div class="profile-header">
+    <a class="back-link" n:href="Admin:default">← Zpět na seznam uživatelů</a>
+
+    {if $user->getId() !== $profile->id}
+        <a n:href="Admin:delete $profile->id"
+           class="btn-delete-user"
+           onclick="return confirm('Opravdu chcete smazat uživatele {$profile->username|escape} včetně všech jeho příspěvků a komentářů? Tuto akci nelze vrátit.')">
+            Smazat uživatele
+        </a>
+    {/if}
+</div>
 
 <h1>Profil: {$profile->username|escape}</h1>
 

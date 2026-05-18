@@ -91,4 +91,60 @@ final class UserProfileFacade
             ->order('username ASC')
             ->fetchAll();
     }
+
+    /**
+     * Smaže uživatele včetně všech jeho dat.
+     *
+     * Pořadí mazání respektuje FK závislosti:
+     *   1. comment_likes na komentářích tohoto uživatele
+     *   2. likes na příspěvcích tohoto uživatele
+     *   3. comment_likes které sám udělil
+     *   4. likes které sám udělil
+     *   5. komentáře uživatele
+     *   6. příspěvky uživatele
+     *   7. samotný uživatel
+     *
+     * Vše probíhá v transakci — buď se smaže vše, nebo nic.
+     */
+    public function deleteUser(int $userId): void
+    {
+        $this->database->beginTransaction();
+        try {
+            // Lajky na komentářích tohoto uživatele (jiní uživatelé je lajkli)
+            $commentIds = $this->database->table('comments')
+                ->where('user_id', $userId)
+                ->fetchPairs('id', 'id');
+            if ($commentIds) {
+                $this->database->table('comment_likes')
+                    ->where('comment_id', $commentIds)
+                    ->delete();
+            }
+
+            // Lajky na příspěvcích tohoto uživatele (jiní uživatelé je lajkli)
+            $postIds = $this->database->table('posts')
+                ->where('user_id', $userId)
+                ->fetchPairs('id', 'id');
+            if ($postIds) {
+                $this->database->table('likes')
+                    ->where('post_id', $postIds)
+                    ->delete();
+            }
+
+            // Lajky které uživatel sám udělil
+            $this->database->table('comment_likes')->where('user_id', $userId)->delete();
+            $this->database->table('likes')->where('user_id', $userId)->delete();
+
+            // Obsah uživatele
+            $this->database->table('comments')->where('user_id', $userId)->delete();
+            $this->database->table('posts')->where('user_id', $userId)->delete();
+
+            // Samotný uživatel
+            $this->database->table('users')->where('id', $userId)->delete();
+
+            $this->database->commit();
+        } catch (\Throwable $e) {
+            $this->database->rollBack();
+            throw $e;
+        }
+    }
 }

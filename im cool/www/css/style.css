@@ -496,3 +496,26 @@ a.button:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-delete-user {
+  background: #e74c3c;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9em;
+  transition: background 0.2s;
+  border: 2px solid #c0392b;
+}
+.btn-delete-user:hover {
+  background: #c0392b;
+  color: #fff;
+}

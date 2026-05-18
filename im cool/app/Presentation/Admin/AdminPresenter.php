@@ -32,6 +32,27 @@ final class AdminPresenter extends Presenter
         $this->template->users = $this->userProfileFacade->getAllUsers();
     }
 
+    /**
+     * Smaže uživatele i všechna jeho data.
+     * Admin nemůže smazat sám sebe.
+     */
+    public function actionDelete(int $id): void
+    {
+        if ($id === $this->getUser()->getId()) {
+            $this->flashMessage('Nemůžete smazat vlastní účet.', 'error');
+            $this->redirect('Admin:profile', $id);
+        }
+
+        $profile = $this->userProfileFacade->getUserProfile($id);
+        if (!$profile) {
+            $this->error('Uživatel nenalezen.');
+        }
+
+        $this->userProfileFacade->deleteUser($id);
+        $this->flashMessage("Uživatel „{$profile->username}" byl smazán.", 'success');
+        $this->redirect('Admin:default');
+    }
+
     /** Profil konkrétního uživatele s grafy aktivity. */
     public function renderProfile(int $id): void
     {
