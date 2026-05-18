@@ -39,7 +39,7 @@ final class MyAuthenticator implements Authenticator
         return new Identity($user->id, $user->role, ['username' => $user->username]);
     }
 
-    // ⬇️ Tyto metody umožní SignPresenteru používat databázi a hashování
+    //tyto metody umožní SignPresenteru používat databázi a hashování
     public function getDatabase(): Nette\Database\Explorer
     {
         return $this->database;
