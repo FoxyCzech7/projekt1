@@ -1,0 +1,38 @@
+{block content}
+
+<h1>Správa uživatelů</h1>
+
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Uživatelské jméno</th>
+            <th>E-mail</th>
+            <th>Role</th>
+            <th>Poslední přihlášení</th>
+            <th>Akce</th>
+        </tr>
+    </thead>
+    <tbody>
+        {foreach $users as $u}
+        <tr>
+            <td>{$u->id}</td>
+            <td>{$u->username|escape}</td>
+            <td>{$u->email|escape}</td>
+            <td><span class="role-badge role-{$u->role|escape}">{$u->role|escape}</span></td>
+            <td>
+                {if isset($u->last_login) && $u->last_login}
+                    {$u->last_login|date:'j. n. Y H:i'}
+                {else}
+                    <span class="muted">—</span>
+                {/if}
+            </td>
+            <td>
+                <a n:href="Admin:profile $u->id" class="btn-profile">Zobrazit profil</a>
+            </td>
+        </tr>
+        {/foreach}
+    </tbody>
+</table>
+
+{/block}

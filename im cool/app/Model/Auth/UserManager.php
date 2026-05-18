@@ -88,4 +88,16 @@ final class UserManager
     {
         $this->database->table('users')->where('id', $id)->delete();
     }
+
+    /**
+     * Zaznamená čas posledního úspěšného přihlášení.
+     * Volá se ihned po User::login() v SignPresenter.
+     * Vyžaduje sloupec last_login DATETIME NULL v tabulce users.
+     */
+    public function updateLastLogin(int $userId): void
+    {
+        $this->database->table('users')
+            ->where('id', $userId)
+            ->update(['last_login' => new \DateTimeImmutable()]);
+    }
 }

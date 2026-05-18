@@ -63,6 +63,8 @@ final class SignPresenter extends Nette\Application\UI\Presenter
         try {
             $identity = $this->authenticator->authenticate($values->username, $values->password);
             $user->login($identity);
+            // Zaznamenáme čas přihlášení až po úspěšném login(), kdy máme getId().
+            $this->userManager->updateLastLogin($user->getId());
             $this->redirect('Home:');
         } catch (AuthenticationException $e) {
             // Záměrně nezobrazujeme původní chybu (neznámý uživatel vs. špatné heslo),

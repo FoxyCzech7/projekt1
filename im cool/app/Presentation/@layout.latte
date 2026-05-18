@@ -13,6 +13,9 @@
 		<li><a n:href="Home:">Články</a></li>
 
 		{if $user->isLoggedIn()}
+			{if $user->isInRole('admin')}
+				<li><a n:href="Admin:default">Admin</a></li>
+			{/if}
 			<li><a n:href="Sign:out">Odhlásit</a></li>
 		{else}
 			<li><a n:href="Sign:in">Přihlásit</a></li>
