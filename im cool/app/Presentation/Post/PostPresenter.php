@@ -6,6 +6,7 @@ use Nette;
 use Nette\Application\UI\Form;
 use App\Model\PostFacade;
 use App\Model\Comments\CommentFacade;
+use App\Model\Premium\PremiumFacade;
 use Nette\Security\Authorizator;
 
 /**
@@ -17,6 +18,7 @@ final class PostPresenter extends Nette\Application\UI\Presenter
     public function __construct(
         private PostFacade $postFacade,
         private CommentFacade $commentFacade,
+        private PremiumFacade $premiumFacade,
         private Authorizator $authorizator,
     ) {}
 
@@ -40,6 +42,11 @@ final class PostPresenter extends Nette\Application\UI\Presenter
             $this->error('Příspěvek nebyl nalezen.');
         }
         $this->template->post = $post;
+
+        // Admin a prémiový uživatelé vidí vždy celý obsah.
+        $user = $this->getUser();
+        $this->template->hasFullAccess = $user->isInRole('admin')
+            || ($user->isLoggedIn() && $this->premiumFacade->isPremium($user->getId()));
 
         // Komentáře jsou pole stdClass objektů (ne ActiveRow) — fasáda je obohacuje
         // o username a email uživatele přes ref(), aby šablona nemusela dělat JOIN ručně.

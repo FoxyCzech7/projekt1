@@ -3,6 +3,7 @@
 namespace App\Presentation\Home;
 
 use App\Model\PostFacade;
+use App\Model\Premium\PremiumFacade;
 use Nette\Application\UI\Presenter;
 use Nette\Utils\Paginator;
 
@@ -14,6 +15,7 @@ final class HomePresenter extends Presenter
 {
     public function __construct(
         private PostFacade $postFacade,
+        private PremiumFacade $premiumFacade,
     ) {
         parent::__construct();
     }
@@ -43,6 +45,10 @@ final class HomePresenter extends Presenter
             }
         }
         $this->template->userHasLiked = $userHasLiked;
+
+        $user = $this->getUser();
+        $this->template->hasFullAccess = $user->isInRole('admin')
+            || ($user->isLoggedIn() && $this->premiumFacade->isPremium($user->getId()));
     }
 
     public function actionDelete(int $id): void

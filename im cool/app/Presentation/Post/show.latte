@@ -21,7 +21,21 @@
             </div>
         {/if}
 
-        {$post->content|noescape}
+        {if $post->is_premium && !$hasFullAccess}
+            <div class="premium-preview">
+                {$post->content|truncate:300|noescape}
+            </div>
+            <div class="premium-overlay">
+                <div class="premium-overlay-inner">
+                    <div class="premium-lock">🔒</div>
+                    <h3>Prémiový obsah</h3>
+                    <p>Zbytek článku je dostupný pouze pro prémiové uživatele.</p>
+                    <a n:href="Premium:plans" class="btn-buy-premium">Získat Premium</a>
+                </div>
+            </div>
+        {else}
+            {$post->content|noescape}
+        {/if}
         <div>
             <a 
                 n:href="like! $post->id"

@@ -9,12 +9,15 @@
         <div class="post">
             <div class="date">{$post->created_at|date:'F j, Y'}</div>
 
+            {if $post->is_premium}
+                <span class="premium-badge">★ Premium</span>
+            {/if}
+
             {if $post->image}
                 <div style="display: flex; align-items: center;">
-                    
-                    <img src="{$basePath}/{$post->image}" alt="Obrázek k příspěvku" 
+                    <img src="{$basePath}/{$post->image}" alt="Obrázek k příspěvku"
                          style="max-width: 200px; width: 100%; height: 200px; margin-left: 15px; margin-top: 15px; object-fit: cover;">
-                         <h2 style="margin-left: 90px; flex-shrink: 0;">
+                    <h2 style="margin-left: 90px; flex-shrink: 0;">
                         <a n:href="Post:show $post->id">{$post->title}</a>
                     </h2>
                 </div>
@@ -22,7 +25,16 @@
                 <h2><a n:href="Post:show $post->id">{$post->title}</a></h2>
             {/if}
 
-            <div>{$post->content|truncate:256}</div>
+            {if $post->is_premium && !$hasFullAccess}
+                <div class="premium-teaser">
+                    {$post->content|truncate:150}
+                    <span class="premium-teaser-cta">
+                        … <a n:href="Premium:plans">Odemknout Premium →</a>
+                    </span>
+                </div>
+            {else}
+                <div>{$post->content|truncate:256}</div>
+            {/if}
 
             <div>
                 <a 

@@ -49,6 +49,7 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
         $this['postForm']->setDefaults([
             'title' => $post->title,
             'content' => $post->content,
+            'is_premium' => (bool) ($post->is_premium ?? false),
         ]);
         $this->template->post = $post;
     }
@@ -62,6 +63,9 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
 
         $form->addTextArea('content', 'Obsah:')
             ->setRequired('Zadejte prosím obsah příspěvku.');
+
+        $form->addCheckbox('is_premium', 'Prémiový příspěvek')
+            ->setOption('description', 'Obsah uvidí pouze prémiový uživatelé.');
 
         $form->addUpload('image', 'Úvodní obrázek:')
             ->setRequired(false)
@@ -97,7 +101,7 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
                 ? $this->saveImage($data->image, $uploadsDir, $id)
                 : $post->image;
 
-            $this->postFacade->updatePost($id, $data->title, $data->content, $imagePath);
+            $this->postFacade->updatePost($id, $data->title, $data->content, $imagePath, $data->is_premium);
             $this->flashMessage('Příspěvek byl upraven.', 'success');
             $this->redirect('Post:show', $id);
         } else {
@@ -112,6 +116,8 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
                 $data->title,
                 $data->content,
                 $this->getUser()->getId(),
+                null,
+                $data->is_premium,
             );
             if ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk()) {
                 $imagePath = $this->saveImage($data->image, $uploadsDir, $newPost->id);

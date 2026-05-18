@@ -16,7 +16,7 @@ class PostsRepository extends BaseRepository
     public function getPublicArticles(): Selection
     {
         return $this->findAll()
-            ->select('id, title, content, created_at, user_id, likes_count, image') // přidáno image
+            ->select('id, title, content, created_at, user_id, likes_count, image, is_premium')
             ->where('created_at < ?', new \DateTime())
             ->order('created_at DESC');
     }
@@ -24,7 +24,7 @@ class PostsRepository extends BaseRepository
     public function getPublicArticlesPage(int $offset, int $limit): Selection
     {
         return $this->findAll()
-            ->select('id, title, content, created_at, user_id, likes_count, image') // přidáno image
+            ->select('id, title, content, created_at, user_id, likes_count, image, is_premium')
             ->where('created_at < ?', new \DateTime())
             ->order('created_at DESC')
             ->limit($limit, $offset);
@@ -47,10 +47,7 @@ class PostsRepository extends BaseRepository
         return $this->getTable()->order('created_at DESC');
     }
 
-    /**
-     * Vytvoří nový příspěvek (volitelně i s obrázkem).
-     */
-    public function createPost(string $title, string $content, int $userId, ?string $image = null): ActiveRow
+    public function createPost(string $title, string $content, int $userId, ?string $image = null, bool $isPremium = false): ActiveRow
     {
         return $this->getTable()->insert([
             'title' => $title,
@@ -58,22 +55,20 @@ class PostsRepository extends BaseRepository
             'user_id' => $userId,
             'created_at' => new \DateTime(),
             'likes_count' => 0,
-            'image' => $image, // přidáno
+            'image' => $image,
+            'is_premium' => $isPremium ? 1 : 0,
         ]);
     }
 
-    /**
-     * Aktualizuje příspěvek (volitelně i obrázek).
-     */
-    public function updatePost(int $id, string $title, string $content, ?string $image = null): void
+    public function updatePost(int $id, string $title, string $content, ?string $image = null, ?bool $isPremium = null): void
     {
-        $data = [
-            'title' => $title,
-            'content' => $content,
-        ];
+        $data = ['title' => $title, 'content' => $content];
 
         if ($image !== null) {
             $data['image'] = $image;
+        }
+        if ($isPremium !== null) {
+            $data['is_premium'] = $isPremium ? 1 : 0;
         }
 
         $this->getTable()->where('id', $id)->update($data);

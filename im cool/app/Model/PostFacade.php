@@ -40,14 +40,14 @@ final class PostFacade
         return $this->postsRepository->findById($id);
     }
 
-    public function createPost(string $title, string $content, int $userId, ?string $image = null): ActiveRow
+    public function createPost(string $title, string $content, int $userId, ?string $image = null, bool $isPremium = false): ActiveRow
     {
-        return $this->postsRepository->createPost($title, $content, $userId, $image);
+        return $this->postsRepository->createPost($title, $content, $userId, $image, $isPremium);
     }
 
-    public function updatePost(int $id, string $title, string $content, ?string $image = null): void
+    public function updatePost(int $id, string $title, string $content, ?string $image = null, ?bool $isPremium = null): void
     {
-        $this->postsRepository->updatePost($id, $title, $content, $image);
+        $this->postsRepository->updatePost($id, $title, $content, $image, $isPremium);
     }
 
     /**
