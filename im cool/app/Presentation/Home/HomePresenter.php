@@ -1,16 +1,19 @@
 <?php
+
 namespace App\Presentation\Home;
 
-use App\Model\Posts\PostsRepository;
+use App\Model\PostFacade;
 use Nette\Application\UI\Presenter;
-use Nette\Database\Explorer;
 use Nette\Utils\Paginator;
 
+/**
+ * Zobrazuje seznam příspěvků s stránkováním.
+ * Deleguje veškerou práci s daty na PostFacade — sám neví nic o DB.
+ */
 final class HomePresenter extends Presenter
 {
     public function __construct(
-        private PostsRepository $postsRepository,
-        private Explorer $database,
+        private PostFacade $postFacade,
     ) {
         parent::__construct();
     }
@@ -22,31 +25,23 @@ final class HomePresenter extends Presenter
         $paginator = new Paginator();
         $paginator->setItemsPerPage($itemsPerPage);
         $paginator->setPage($page);
+        $paginator->setItemCount($this->postFacade->getPublicArticlesCount());
 
-        $totalPosts = $this->postsRepository->getPublicArticlesCount();
-        $paginator->setItemCount($totalPosts);
-
-        $posts = $this->postsRepository->getPublicArticlesPage($paginator->getOffset(), $paginator->getLength());
+        // Selection je lazy — data se načtou až při fetchAll() nebo iteraci v šabloně.
+        $posts = $this->postFacade->getPublicArticlesPage($paginator->getOffset(), $paginator->getLength());
 
         $this->template->posts = $posts;
         $this->template->paginator = $paginator;
 
-        $userId = $this->getUser()->isLoggedIn() ? $this->getUser()->getId() : null;
         $userHasLiked = [];
-
-        if ($userId && count($posts) > 0) {
-            // Získáme ID příspěvků na aktuální stránce
+        if ($this->getUser()->isLoggedIn()) {
+            // fetchAll() musí proběhnout před getUserLikedPostIds(), aby byl Selection
+            // již hydratovaný — jinak by se dotaz spustil dvakrát.
             $postIds = array_map(fn($post) => $post->id, $posts->fetchAll());
-
-            // Zjistíme, které příspěvky uživatel označil "like"
-            $likes = $this->database->table('likes')
-                ->where('user_id', $userId)
-                ->where('post_id', $postIds)
-                ->fetchPairs('post_id', 'post_id'); // Vrací pole post_id => post_id
-
-            $userHasLiked = $likes;
+            if ($postIds) {
+                $userHasLiked = $this->postFacade->getUserLikedPostIds($this->getUser()->getId(), $postIds);
+            }
         }
-
         $this->template->userHasLiked = $userHasLiked;
     }
 
@@ -57,7 +52,7 @@ final class HomePresenter extends Presenter
             $this->redirect('Sign:in');
         }
 
-        $post = $this->postsRepository->findById($id);
+        $post = $this->postFacade->findById($id);
         if (!$post) {
             $this->error('Příspěvek nenalezen.');
         }
@@ -68,7 +63,7 @@ final class HomePresenter extends Presenter
             $this->redirect('Home:default');
         }
 
-        $this->postsRepository->delete($id);
+        $this->postFacade->deletePost($id);
         $this->flashMessage('Příspěvek byl smazán.', 'success');
         $this->redirect('Home:default');
     }
@@ -78,26 +73,10 @@ final class HomePresenter extends Presenter
         if (!$this->getUser()->isLoggedIn()) {
             $this->flashMessage('Musíš být přihlášen.', 'error');
             $this->redirect('this');
+            return;
         }
 
-        $userId = $this->getUser()->getId();
-        $likesTable = $this->database->table('likes');
-        $like = $likesTable
-            ->where('user_id', $userId)
-            ->where('post_id', $postId)
-            ->fetch();
-
-        $postsTable = $this->database->table('posts');
-
-        if ($like) {
-            // Odebrání lajku
-            $like->delete();
-            $postsTable->where('id', $postId)->update(['likes_count-=' => 1]);
-        } else {
-            // Přidání lajku
-            $likesTable->insert(['user_id' => $userId, 'post_id' => $postId]);
-            $postsTable->where('id', $postId)->update(['likes_count+=' => 1]);
-        }
+        $this->postFacade->toggleLike($postId, $this->getUser()->getId());
 
         if ($this->isAjax()) {
             $this->redrawControl('likeArea');

@@ -6,11 +6,22 @@ use Nette;
 use Nette\Application\UI\Form;
 use Nette\Security\AuthenticationException;
 use App\Model\Auth\MyAuthenticator;
+use App\Model\Auth\UserManager;
+use App\Model\Auth\DuplicateNameException;
+use App\Model\Auth\DuplicateEmailException;
 
+/**
+ * Přihlášení, odhlášení a registrace uživatelů.
+ *
+ * Pro přihlášení používá MyAuthenticator (ověřuje heslo vůči DB).
+ * Pro registraci používá UserManager — presenter tak neví nic o hashování
+ * hesel ani o struktuře tabulky users.
+ */
 final class SignPresenter extends Nette\Application\UI\Presenter
 {
     public function __construct(
         private MyAuthenticator $authenticator,
+        private UserManager $userManager,
     ) {}
 
     protected function startup(): void
@@ -18,7 +29,6 @@ final class SignPresenter extends Nette\Application\UI\Presenter
         parent::startup();
         $this->setLayout('layout');
 
-        // Přihlášený uživatel nesmí na přihlašovací a registrační stránku
         if ($this->getUser()->isLoggedIn() && in_array($this->action, ['in', 'register'], true)) {
             $this->redirect('Home:');
         }
@@ -41,7 +51,6 @@ final class SignPresenter extends Nette\Application\UI\Presenter
             ->setRequired('Prosím vyplňte své heslo.');
 
         $form->addSubmit('send', 'Přihlásit');
-
         $form->onSuccess[] = [$this, 'signInFormSucceeded'];
         return $form;
     }
@@ -52,13 +61,12 @@ final class SignPresenter extends Nette\Application\UI\Presenter
         $user->setAuthenticator($this->authenticator);
 
         try {
-            $identity = $this->authenticator->authenticate(
-                $values->username,
-                $values->password
-            );
+            $identity = $this->authenticator->authenticate($values->username, $values->password);
             $user->login($identity);
             $this->redirect('Home:');
         } catch (AuthenticationException $e) {
+            // Záměrně nezobrazujeme původní chybu (neznámý uživatel vs. špatné heslo),
+            // aby útočník nemohl zjistit, která jména v systému existují.
             $form->addError('Nesprávné přihlašovací údaje.');
         }
     }
@@ -77,35 +85,21 @@ final class SignPresenter extends Nette\Application\UI\Presenter
             ->setRequired('Zadejte heslo.');
 
         $form->addSubmit('send', 'Registrovat');
-
         $form->onSuccess[] = [$this, 'registerFormSucceeded'];
         return $form;
     }
 
     public function registerFormSucceeded(Form $form, \stdClass $values): void
     {
-        $users = $this->authenticator->getDatabase()->table('users');
-
-        if ($users->where('username', $values->username)->fetch()) {
+        try {
+            $this->userManager->registerWithEmail($values->username, $values->email, $values->password);
+            $this->flashMessage('Registrace byla úspěšná. Nyní se můžete přihlásit.');
+            $this->redirect('Sign:in');
+        } catch (DuplicateNameException $e) {
+            // Každá výjimka = konkrétní chybová hláška bez porovnávání řetězců.
             $form->addError('Toto uživatelské jméno je již použito.');
-            return;
-        }
-
-        if ($users->where('email', $values->email)->fetch()) {
+        } catch (DuplicateEmailException $e) {
             $form->addError('Tento email je již registrován.');
-            return;
         }
-
-        $hash = $this->authenticator->getPasswords()->hash($values->password);
-
-        $users->insert([
-            'username' => $values->username,
-            'email' => $values->email,
-            'password' => $hash,
-            'role' => 'user',
-        ]);
-
-        $this->flashMessage('Registrace byla úspěšná. Nyní se můžete přihlásit.');
-        $this->redirect('Sign:in');
     }
 }

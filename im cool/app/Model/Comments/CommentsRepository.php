@@ -82,7 +82,7 @@ class CommentsRepository extends BaseRepository
 
     /**
      * Vrací komentáře s uživatelskými jmény pomocí JOIN (přes SQL dotaz)
-     * 
+     *
      * @param int $postId
      * @return array
      */
@@ -95,5 +95,15 @@ class CommentsRepository extends BaseRepository
                 ORDER BY comments.created_at ASC';
 
         return $this->database->query($sql, $postId)->fetchAll();
+    }
+
+    public function incrementLikes(int $id): void
+    {
+        $this->getTable()->where('id', $id)->update(['likes_count+=' => 1]);
+    }
+
+    public function decrementLikes(int $id): void
+    {
+        $this->getTable()->where('id', $id)->update(['likes_count-=' => 1]);
     }
 }

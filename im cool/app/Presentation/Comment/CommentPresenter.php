@@ -2,18 +2,18 @@
 
 namespace App\Presentation\Comment;
 
-use App\Model\Comments\CommentsRepository;
+use App\Model\Comments\CommentFacade;
 use Nette\Application\UI\Presenter;
 
 final class CommentPresenter extends Presenter
 {
     public function __construct(
-        private CommentsRepository $commentsRepository,
+        private CommentFacade $commentFacade,
     ) {}
 
     public function actionDelete(int $id): void
     {
-        $comment = $this->commentsRepository->findById($id);
+        $comment = $this->commentFacade->findById($id);
         if (!$comment) {
             $this->error('Komentář nenalezen.');
         }
@@ -24,9 +24,10 @@ final class CommentPresenter extends Presenter
             $this->redirect('Post:show', $comment->post_id);
         }
 
-        $this->commentsRepository->delete($id);
+        $postId = $comment->post_id;
+        $this->commentFacade->deleteComment($id);
 
         $this->flashMessage('Komentář byl smazán.', 'success');
-        $this->redirect('Post:show', $comment->post_id);
+        $this->redirect('Post:show', $postId);
     }
 }

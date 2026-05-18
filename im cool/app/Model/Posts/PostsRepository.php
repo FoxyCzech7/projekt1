@@ -78,4 +78,14 @@ class PostsRepository extends BaseRepository
 
         $this->getTable()->where('id', $id)->update($data);
     }
+
+    public function incrementLikes(int $id): void
+    {
+        $this->getTable()->where('id', $id)->update(['likes_count+=' => 1]);
+    }
+
+    public function decrementLikes(int $id): void
+    {
+        $this->getTable()->where('id', $id)->update(['likes_count-=' => 1]);
+    }
 }

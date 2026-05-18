@@ -4,83 +4,63 @@ namespace App\Presentation\Post;
 
 use Nette;
 use Nette\Application\UI\Form;
-use App\Model\Posts\PostsRepository;
-use App\Model\Comments\CommentsRepository;
+use App\Model\PostFacade;
+use App\Model\Comments\CommentFacade;
 use Nette\Security\Authorizator;
-use Nette\Database\Explorer;
 
+/**
+ * Zobrazuje detail příspěvku s komentáři a formulář pro přidání komentáře.
+ * Deleguje práci s daty na PostFacade a CommentFacade.
+ */
 final class PostPresenter extends Nette\Application\UI\Presenter
 {
     public function __construct(
-        private PostsRepository $postsRepository,
-        private CommentsRepository $commentsRepository,
+        private PostFacade $postFacade,
+        private CommentFacade $commentFacade,
         private Authorizator $authorizator,
-        private Explorer $database,
     ) {}
 
     public function renderDefault(): void
     {
-        $this->template->posts = $this->database->table('posts')->order('created_at DESC')->fetchAll();
+        $posts = $this->postFacade->getPublicArticles();
+        $this->template->posts = $posts->fetchAll();
 
-        $userId = $this->getUser()->getId();
-        $this->template->userHasLiked = [];
-
-        if ($userId) {
-            $likedPostIds = $this->database->table('likes')
-                ->where('user_id', $userId)
-                ->fetchPairs(null, 'post_id');
-            $this->template->userHasLiked = array_fill_keys($likedPostIds, true);
+        $userHasLiked = [];
+        if ($this->getUser()->isLoggedIn()) {
+            $postIds = array_map(fn($p) => $p->id, $this->template->posts);
+            $userHasLiked = $this->postFacade->getUserLikedPostIds($this->getUser()->getId(), $postIds);
         }
+        $this->template->userHasLiked = $userHasLiked;
     }
 
     public function renderShow(int $id): void
     {
-        $post = $this->postsRepository->findById($id);
+        $post = $this->postFacade->findById($id);
         if (!$post) {
             $this->error('Příspěvek nebyl nalezen.');
         }
         $this->template->post = $post;
 
-        $comments = $this->database->table('comments')
-            ->where('post_id', $id)
-            ->order('created_at DESC')
-            ->fetchAll();
+        // Komentáře jsou pole stdClass objektů (ne ActiveRow) — fasáda je obohacuje
+        // o username a email uživatele přes ref(), aby šablona nemusela dělat JOIN ručně.
+        $this->template->comments = $this->commentFacade->getCommentsByPost($id);
 
-        $commentsData = [];
-        foreach ($comments as $comment) {
-            $user = $comment->ref('users', 'user_id');
-            $commentsData[] = (object) [
-                'id' => $comment->id,
-                'content' => $comment->content,
-                'created_at' => $comment->created_at,
-                'user_id' => $comment->user_id,
-                'username' => $user?->username,
-                'email' => $user?->email,
-                'likes_count' => $comment->likes_count,
-            ];
+        $userHasLiked = [];
+        $userHasLikedComments = [];
+        if ($this->getUser()->isLoggedIn()) {
+            $userId = $this->getUser()->getId();
+            // Pro post předáváme [$id] — pole s jedním prvkem, aby getUserLikedPostIds
+            // mohlo použít stejnou cestu kódu jako na homepage (kde je jich více).
+            $userHasLiked = $this->postFacade->getUserLikedPostIds($userId, [$id]);
+            $userHasLikedComments = $this->commentFacade->getUserLikedCommentIds($userId);
         }
-        $this->template->comments = $commentsData;
-
-        $userId = $this->getUser()->getId();
-        $this->template->userHasLikedComments = [];
-        $this->template->userHasLiked = [];
-
-        if ($userId) {
-            $likedCommentIds = $this->database->table('comment_likes')
-                ->where('user_id', $userId)
-                ->fetchPairs(null, 'comment_id');
-            $this->template->userHasLikedComments = array_fill_keys($likedCommentIds, true);
-
-            $likedPostIds = $this->database->table('likes')
-                ->where('user_id', $userId)
-                ->fetchPairs(null, 'post_id');
-            $this->template->userHasLiked = array_fill_keys($likedPostIds, true);
-        }
+        $this->template->userHasLiked = $userHasLiked;
+        $this->template->userHasLikedComments = $userHasLikedComments;
     }
 
     public function renderList(): void
     {
-        $this->template->posts = $this->postsRepository->findAll();
+        $this->template->posts = $this->postFacade->getPublicArticles();
     }
 
     protected function createComponentCommentForm(): Form
@@ -88,6 +68,7 @@ final class PostPresenter extends Nette\Application\UI\Presenter
         $form = new Form;
         $user = $this->getUser();
 
+        // Přihlášení uživatelé nezadávají jméno ani email — berou se z jejich identity.
         if ($user->isLoggedIn()) {
             $form->addTextArea('content', 'Komentář:')
                 ->setRequired('Zadejte prosím obsah komentáře.')
@@ -122,9 +103,10 @@ final class PostPresenter extends Nette\Application\UI\Presenter
 
         $user = $this->getUser();
         if ($user->isLoggedIn()) {
-            $identity = $user->getIdentity();
-            $name = $identity->name ?? 'Anonym';
-            $email = $identity->email ?? '';
+            // $identity->username funguje jako přístup přes getData()['username']
+            // díky magic __get v Nette\Security\Identity.
+            $name = $user->getIdentity()->username ?? 'Anonym';
+            $email = '';
             $userId = $user->getId();
         } else {
             $name = trim($data->name) ?: 'Anonym';
@@ -132,20 +114,10 @@ final class PostPresenter extends Nette\Application\UI\Presenter
             $userId = null;
         }
 
-        $this->database->beginTransaction();
         try {
-            $this->commentsRepository->insert([
-                'post_id' => $postId,
-                'name' => $name,
-                'email' => $email,
-                'content' => trim($data->content),
-                'created_at' => new \DateTimeImmutable(),
-                'user_id' => $userId,
-            ]);
-            $this->database->commit();
+            $this->commentFacade->addComment($postId, $userId, $name, $email, trim($data->content));
             $this->flashMessage('Komentář byl přidán.', 'success');
         } catch (\Exception $e) {
-            $this->database->rollBack();
             $this->flashMessage('Při ukládání komentáře došlo k chybě. Zkuste to prosím znovu.', 'error');
         }
 
@@ -158,38 +130,15 @@ final class PostPresenter extends Nette\Application\UI\Presenter
 
     public function handleLike(int $postId): void
     {
-        $user = $this->getUser();
-        if (!$user->isLoggedIn()) {
+        if (!$this->getUser()->isLoggedIn()) {
             $this->flashMessage('Musíš být přihlášen.', 'error');
             $this->redirect('this');
+            return;
         }
 
-        $userId = $user->getId();
-
-        $this->database->beginTransaction();
         try {
-            $like = $this->database->table('likes')
-                ->where('user_id', $userId)
-                ->where('post_id', $postId)
-                ->fetch();
-
-            if ($like) {
-                $like->delete();
-                $this->database->table('posts')->where('id', $postId)->update([
-                    'likes_count' => new \Nette\Database\SqlLiteral('likes_count - 1'),
-                ]);
-            } else {
-                $this->database->table('likes')->insert([
-                    'user_id' => $userId,
-                    'post_id' => $postId,
-                ]);
-                $this->database->table('posts')->where('id', $postId)->update([
-                    'likes_count' => new \Nette\Database\SqlLiteral('likes_count + 1'),
-                ]);
-            }
-            $this->database->commit();
+            $this->postFacade->toggleLike($postId, $this->getUser()->getId());
         } catch (\Exception $e) {
-            $this->database->rollBack();
             $this->flashMessage('Došlo k chybě při lajkování.', 'error');
         }
 
@@ -202,38 +151,15 @@ final class PostPresenter extends Nette\Application\UI\Presenter
 
     public function handleLikeComment(int $commentId): void
     {
-        $user = $this->getUser();
-        if (!$user->isLoggedIn()) {
+        if (!$this->getUser()->isLoggedIn()) {
             $this->flashMessage('Musíš být přihlášen.', 'error');
             $this->redirect('this');
+            return;
         }
 
-        $userId = $user->getId();
-
-        $this->database->beginTransaction();
         try {
-            $like = $this->database->table('comment_likes')
-                ->where('user_id', $userId)
-                ->where('comment_id', $commentId)
-                ->fetch();
-
-            if ($like) {
-                $like->delete();
-                $this->database->table('comments')
-                    ->where('id', $commentId)
-                    ->update(['likes_count' => new \Nette\Database\SqlLiteral('likes_count - 1')]);
-            } else {
-                $this->database->table('comment_likes')->insert([
-                    'user_id' => $userId,
-                    'comment_id' => $commentId,
-                ]);
-                $this->database->table('comments')
-                    ->where('id', $commentId)
-                    ->update(['likes_count' => new \Nette\Database\SqlLiteral('likes_count + 1')]);
-            }
-            $this->database->commit();
+            $this->commentFacade->toggleLike($commentId, $this->getUser()->getId());
         } catch (\Exception $e) {
-            $this->database->rollBack();
             $this->flashMessage('Došlo k chybě při lajkování komentáře.', 'error');
         }
 
@@ -244,6 +170,10 @@ final class PostPresenter extends Nette\Application\UI\Presenter
         }
     }
 
+    /**
+     * Zkontroluje oprávnění přes Authorizator (RBAC).
+     * Iterujeme přes role, protože uživatel jich může mít víc.
+     */
     private function isAllowed(string $resource, string $privilege): bool
     {
         $user = $this->getUser();

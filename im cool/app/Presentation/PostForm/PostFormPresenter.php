@@ -4,13 +4,17 @@ namespace App\Presentation\PostForm;
 
 use Nette;
 use Nette\Application\UI\Form;
-use App\Model\Posts\PostsRepository;
+use App\Model\PostFacade;
 use Nette\Security\Authorizator;
 
+/**
+ * Formulář pro vytvoření a editaci příspěvku.
+ * Přístup povolen jen přihlášeným autorům a adminům.
+ */
 final class PostFormPresenter extends Nette\Application\UI\Presenter
 {
     public function __construct(
-        private PostsRepository $postsRepository,
+        private PostFacade $postFacade,
         private Authorizator $authorizator,
     ) {}
 
@@ -33,7 +37,7 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
 
     public function renderEdit(int $id): void
     {
-        $post = $this->postsRepository->findById($id);
+        $post = $this->postFacade->findById($id);
         if (!$post) {
             $this->error('Příspěvek nenalezen.');
         }
@@ -78,7 +82,8 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
         }
 
         if ($id) {
-            $post = $this->postsRepository->findById($id);
+            // Editace existujícího příspěvku
+            $post = $this->postFacade->findById($id);
             if (!$post) {
                 $this->error('Příspěvek nenalezen.');
             }
@@ -87,28 +92,30 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
                 $this->redirect('Post:show', $id);
             }
 
-            if ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk()) {
-                $imagePath = $this->saveImage($data->image, $uploadsDir, $id);
-            } else {
-                $imagePath = $post->image;
-            }
-            $this->postsRepository->updatePost($id, $data->title, $data->content, $imagePath);
+            // Pokud uživatel nenahrál nový obrázek, ponecháme stávající cestu.
+            $imagePath = ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk())
+                ? $this->saveImage($data->image, $uploadsDir, $id)
+                : $post->image;
+
+            $this->postFacade->updatePost($id, $data->title, $data->content, $imagePath);
             $this->flashMessage('Příspěvek byl upraven.', 'success');
             $this->redirect('Post:show', $id);
         } else {
+            // Vytvoření nového příspěvku
             if (!$this->isAllowed('post', 'add')) {
                 $this->flashMessage('Nemáte oprávnění vytvářet příspěvky.', 'error');
                 $this->redirect('Home:default');
             }
-            $newPost = $this->postsRepository->createPost(
+            // Post se vytvoří nejdřív bez obrázku, aby existovalo jeho ID
+            // pro pojmenování souboru (image-{postId}.jpg).
+            $newPost = $this->postFacade->createPost(
                 $data->title,
                 $data->content,
                 $this->getUser()->getId(),
-                null
             );
             if ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk()) {
                 $imagePath = $this->saveImage($data->image, $uploadsDir, $newPost->id);
-                $this->postsRepository->updatePost($newPost->id, $newPost->title, $newPost->content, $imagePath);
+                $this->postFacade->updatePost($newPost->id, $newPost->title, $newPost->content, $imagePath);
             }
             $this->flashMessage('Příspěvek byl vytvořen.', 'success');
             $this->redirect('Post:show', $newPost->id);
@@ -124,6 +131,10 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
         return 'img/posts/' . $finalName;
     }
 
+    /**
+     * Převede diakritiku a odstraní nebezpečné znaky z názvu souboru.
+     * Bez tohoto kroku by útočník mohl nahrát soubor se jménem jako "../../config.php".
+     */
     private function sanitizeFileName(string $filename): string
     {
         $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $filename);
