@@ -48,8 +48,11 @@ final class AdminPresenter extends Presenter
             $this->error('Uživatel nenalezen.');
         }
 
+        // Username uložíme před smazáním — PHPStan neví, že error() nikdy nevrátí,
+        // takže $profile by zůstal null|object i za if-blokem.
+        $username = $profile->username;
         $this->userProfileFacade->deleteUser($id);
-        $this->flashMessage("Uživatel „{$profile->username}" byl smazán.", 'success');
+        $this->flashMessage("Uživatel „{$username}" byl smazán.", 'success');
         $this->redirect('Admin:default');
     }
 
