@@ -87,8 +87,9 @@ final class PremiumPresenter extends Presenter
             $this->redirect('Premium:plans');
         }
         $this->template->cart = $this->cartFacade->getCart();
-        // URL pro přesměrování generujeme v PHP, aby šablona nemusela volat link().
-        $this->template->thankyouUrl = $this->link('Premium:thankyou');
+        // json_encode zajistí správné escapování pro JS string literal —
+        // Latte 3 filtr |json neexistuje, proto serializujeme v PHP.
+        $this->template->thankyouUrl = json_encode($this->link('Premium:thankyou'));
     }
 
     /**
