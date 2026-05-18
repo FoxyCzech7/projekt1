@@ -24,39 +24,64 @@ final class CommentFacade
     }
 
     /**
-     * Vrátí komentáře příspěvku jako pole plain objektů obohacených o data uživatele.
+     * Vrátí komentáře příspěvku jako strom — každý uzel má pole $children.
      *
-     * Nevrací ActiveRow, protože potřebujeme přidat username a email z tabulky users.
-     * ref() provede lazy JOIN přes Nette Database Explorer bez extra SQL dotazu na každý řádek.
+     * Strom se sestavuje ve dvou průchodech v PHP (né rekurzivním SQL),
+     * aby kód fungoval i na starších verzích MariaDB bez CTE podpory.
+     *
+     * Průchod 1: vytvoří stdClass uzly s children = [] a indexuje je podle ID.
+     * Průchod 2: přiřadí uzly do children rodiče; kořenové uzly jdou do $roots.
      */
     public function getCommentsByPost(int $postId): array
     {
-        $result = [];
-        foreach ($this->commentsRepository->findByPostId($postId) as $comment) {
-            // ref() vrátí null pokud user_id je null (komentář hosta).
-            // V tom případě bereme jméno a email přímo ze sloupců comments.name / comments.email.
+        $byId = [];
+        $roots = [];
+
+        // fetchAll() je nutný před prvním průchodem — Selection lze iterovat jen jednou.
+        $rows = $this->commentsRepository->findByPostId($postId)->fetchAll();
+
+        foreach ($rows as $comment) {
             $user = $comment->user_id !== null ? $comment->ref('users', 'user_id') : null;
-            $result[] = (object) [
+            $node = (object) [
                 'id' => $comment->id,
                 'content' => $comment->content,
                 'created_at' => $comment->created_at,
                 'user_id' => $comment->user_id,
                 'post_id' => $comment->post_id,
+                'parent_id' => $comment->parent_id ?? null,
                 'username' => $user?->username ?? $comment->name,
                 'email' => $user !== null ? ($user->email ?? '') : $comment->email,
                 'likes_count' => $comment->likes_count,
+                'children' => [],
             ];
+            $byId[$comment->id] = $node;
         }
-        return $result;
+
+        foreach ($byId as $node) {
+            if ($node->parent_id !== null && isset($byId[$node->parent_id])) {
+                $byId[$node->parent_id]->children[] = $node;
+            } else {
+                $roots[] = $node;
+            }
+        }
+
+        return $roots;
     }
 
     /**
-     * Vloží nový komentář.
+     * Vloží nový komentář nebo odpověď na komentář.
      *
-     * likes_count se nastavuje explicitně na 0, protože DB sloupec nemá DEFAULT hodnotu.
+     * $parentId null = kořenový komentář; int = odpověď na existující komentář.
+     * likes_count se nastavuje explicitně na 0, protože DB sloupec nemá DEFAULT.
      */
-    public function addComment(int $postId, ?int $userId, string $name, string $email, string $content): void
-    {
+    public function addComment(
+        int $postId,
+        ?int $userId,
+        string $name,
+        string $email,
+        string $content,
+        ?int $parentId = null,
+    ): void {
         $this->commentsRepository->insert([
             'post_id' => $postId,
             'name' => $name,
@@ -65,6 +90,7 @@ final class CommentFacade
             'created_at' => new \DateTimeImmutable(),
             'user_id' => $userId,
             'likes_count' => 0,
+            'parent_id' => $parentId,
         ]);
     }
 
@@ -83,9 +109,7 @@ final class CommentFacade
 
     /**
      * Přidá nebo odebere lajk a aktualizuje počítadlo na komentáři.
-     *
-     * Logika je tady (ne v repository), protože zasahuje do dvou tabulek:
-     * comment_likes a počítadla likes_count v tabulce comments.
+     * Zasahuje do dvou tabulek — proto je logika tady, ne v repository.
      */
     public function toggleLike(int $commentId, int $userId): void
     {
@@ -99,11 +123,6 @@ final class CommentFacade
         }
     }
 
-    /**
-     * Vrátí ID komentářů, které uživatel lajknul — jako pole [commentId => commentId].
-     *
-     * Associativní pole umožňuje O(1) lookup v šabloně: isset($userHasLikedComments[$comment->id]).
-     */
     public function getUserLikedCommentIds(int $userId): array
     {
         return $this->commentLikesRepository->getUserLikedCommentIds($userId);

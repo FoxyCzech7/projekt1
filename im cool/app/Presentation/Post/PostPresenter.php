@@ -92,6 +92,9 @@ final class PostPresenter extends Nette\Application\UI\Presenter
                 ->setRequired('Zadejte prosím obsah komentáře.')
                 ->addRule(Form::MIN_LENGTH, 'Komentář musí mít alespoň %d znaků.', 5);
         }
+        // parent_id = 0 znamená kořenový komentář; JS ho nastavuje při kliknutí na "Odpovědět".
+        $form->addHidden('parent_id', '0');
+
         $form->addSubmit('send', 'Přidat komentář');
         $form->onSuccess[] = [$this, 'commentFormSucceeded'];
         return $form;
@@ -121,8 +124,13 @@ final class PostPresenter extends Nette\Application\UI\Presenter
             $userId = null;
         }
 
+        // parent_id > 0 = odpověď na existující komentář; 0 nebo prázdné = kořenový.
+        $parentId = !empty($data->parent_id) && (int) $data->parent_id > 0
+            ? (int) $data->parent_id
+            : null;
+
         try {
-            $this->commentFacade->addComment($postId, $userId, $name, $email, trim($data->content));
+            $this->commentFacade->addComment($postId, $userId, $name, $email, trim($data->content), $parentId);
             $this->flashMessage('Komentář byl přidán.', 'success');
         } catch (\Exception $e) {
             $this->flashMessage('Při ukládání komentáře došlo k chybě. Zkuste to prosím znovu.', 'error');
