@@ -33,15 +33,17 @@ final class CommentFacade
     {
         $result = [];
         foreach ($this->commentsRepository->findByPostId($postId) as $comment) {
-            $user = $comment->ref('users', 'user_id');
+            // ref() vrátí null pokud user_id je null (komentář hosta).
+            // V tom případě bereme jméno a email přímo ze sloupců comments.name / comments.email.
+            $user = $comment->user_id !== null ? $comment->ref('users', 'user_id') : null;
             $result[] = (object) [
                 'id' => $comment->id,
                 'content' => $comment->content,
                 'created_at' => $comment->created_at,
                 'user_id' => $comment->user_id,
                 'post_id' => $comment->post_id,
-                'username' => $user?->username,
-                'email' => $user?->email,
+                'username' => $user?->username ?? $comment->name,
+                'email' => $user !== null ? ($user->email ?? '') : $comment->email,
                 'likes_count' => $comment->likes_count,
             ];
         }
