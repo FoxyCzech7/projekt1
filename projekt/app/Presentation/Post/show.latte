@@ -7,8 +7,8 @@
 <div class="comment {if $depth > 0}comment-child{/if}" style="margin-left: {min($depth * 28, 140)}px">
     <div class="comment-meta">
         <b>
-            {if $comment->email}
-                <a href="mailto:{$comment->email|escape}">{$comment->username|escape}</a>
+            {if $comment->user_id}
+                <a n:href="Profile:view $comment->user_id" class="comment-author-link">{$comment->username|escape}</a>
             {else}
                 {$comment->username|escape}
             {/if}
@@ -66,6 +66,12 @@
     </div>
 
     <div class="post">
+        {if $postAuthor}
+            <div class="post-author-meta">
+                Autor: <a n:href="Profile:view $postAuthor->id" class="post-author-link">@{$postAuthor->username|escape}</a>
+            </div>
+        {/if}
+
         {if $tags}
             <div class="tags-list">
                 {foreach $tags as $tag}

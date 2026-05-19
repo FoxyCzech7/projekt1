@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vojenská technika</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            background: #0a0d06;
+        }
+
+        .landing-video-wrap {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+            /* Pokryje celý viewport při zachování 16:9 */
+            width: 100vw;
+            height: 56.25vw; /* 100/16*9 */
+            min-height: 100vh;
+            min-width: 177.78vh; /* 100/9*16 */
+        }
+        .landing-video-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .landing-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(5, 8, 3, 0.55) 0%,
+                rgba(5, 8, 3, 0.72) 60%,
+                rgba(5, 8, 3, 0.90) 100%
+            );
+            z-index: 1;
+        }
+
+        .landing-content {
+            position: relative;
+            z-index: 2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 32px 16px;
+        }
+
+        .landing-title {
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 900;
+            color: #8ec832;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            text-shadow: 0 0 40px rgba(106, 170, 26, 0.4);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .landing-subtitle {
+            font-size: clamp(0.85rem, 2vw, 1.05rem);
+            color: #5a7a40;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 52px;
+        }
+
+        .landing-stripe {
+            width: 60px;
+            height: 3px;
+            background: #4a8a10;
+            margin: 0 auto 52px;
+        }
+
+        .landing-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .landing-btn {
+            display: block;
+            width: 100%;
+            padding: 14px 0;
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 2px;
+            transition: background 0.18s, color 0.18s, border-color 0.18s;
+            cursor: pointer;
+        }
+
+        .landing-btn--primary {
+            background: #4a8a10;
+            color: #e8f0d0;
+            border: 2px solid #4a8a10;
+        }
+        .landing-btn--primary:hover {
+            background: #5ca014;
+            border-color: #5ca014;
+            color: #fff;
+        }
+
+        .landing-btn--secondary {
+            background: transparent;
+            color: #8ec832;
+            border: 2px solid #2a5008;
+        }
+        .landing-btn--secondary:hover {
+            background: #1a2e08;
+            border-color: #4a8a10;
+            color: #a8d840;
+        }
+
+        .landing-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.72rem;
+            color: #2a4018;
+            letter-spacing: 0.1em;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="landing-video-wrap">
+    <iframe
+        src="https://www.youtube.com/embed/gn63Siphu3M?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&playlist=gn63Siphu3M&disablekb=1&iv_load_policy=3&modestbranding=1&playsinline=1"
+        allow="autoplay; encrypted-media"
+        allowfullscreen>
+    </iframe>
+</div>
+
+<div class="landing-overlay"></div>
+
+<div class="landing-content">
+    <div class="landing-title">Vojenská technika</div>
+    <div class="landing-subtitle">Zpravodajství ze světa vojenství</div>
+    <div class="landing-stripe"></div>
+
+    <div class="landing-buttons">
+        <a href="{link Home:default}" class="landing-btn landing-btn--primary">Zobrazit blog</a>
+
+        {if $isLoggedIn}
+            <a href="{link Profile:default}" class="landing-btn landing-btn--secondary">Můj profil</a>
+        {else}
+            <a href="{link Sign:in}" class="landing-btn landing-btn--secondary">Přihlásit se</a>
+            <a href="{link Sign:register}" class="landing-btn landing-btn--secondary">Registrovat</a>
+        {/if}
+    </div>
+</div>
+
+<div class="landing-footer">VOJENSKÁ TECHNIKA &nbsp;·&nbsp; {date('Y')}</div>
+
+</body>
+</html>

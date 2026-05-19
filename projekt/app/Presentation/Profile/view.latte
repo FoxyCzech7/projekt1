@@ -1,0 +1,35 @@
+{block content}
+
+<h1>Profil: {$profile->username|escape}</h1>
+
+{if !$profile->is_public}
+    <div class="profile-private">
+        <div class="profile-avatar">{mb_strtoupper(mb_substr($profile->username, 0, 1))}</div>
+        <p>Tento profil je soukromý.</p>
+    </div>
+{else}
+    <div class="profile-hero">
+        <div class="profile-hero-info">
+            <div class="profile-avatar">
+                {mb_strtoupper(mb_substr($profile->username, 0, 1))}
+            </div>
+            <div>
+                <div class="profile-name">
+                    {if $profile->first_name || $profile->last_name}
+                        {$profile->first_name|escape} {$profile->last_name|escape}
+                    {else}
+                        {$profile->username|escape}
+                    {/if}
+                </div>
+                <div class="profile-meta">
+                    <span class="profile-username-tag">@{$profile->username|escape}</span>
+                    {if $profile->email}
+                        <a href="mailto:{$profile->email|escape}" class="profile-email-link">{$profile->email|escape}</a>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+{/if}
+
+{/block}

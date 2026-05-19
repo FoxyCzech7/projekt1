@@ -46,6 +46,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
             $this->error('Příspěvek nebyl nalezen.');
         }
         $this->template->post = $post;
+        $this->template->postAuthor = $post->ref('users', 'user_id');
         $this->postFacade->incrementViews($id);
         $this->template->readingTime = PostFacade::readingTime($post->content);
         $this->template->tags = $this->tagFacade->getPostTags($id);

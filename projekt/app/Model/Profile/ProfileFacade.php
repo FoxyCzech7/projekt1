@@ -66,6 +66,26 @@ final class ProfileFacade
     }
 
     /**
+     * Vrátí veřejné údaje o uživateli pro zobrazení cizího profilu.
+     * Vrátí null pokud uživatel neexistuje.
+     */
+    public function getPublicProfile(int $userId): ?object
+    {
+        $user = $this->database->table('users')->get($userId);
+        if (!$user) {
+            return null;
+        }
+        return (object) [
+            'id'         => $user->id,
+            'username'   => $user->username,
+            'is_public'  => (bool) ($user->is_public ?? true),
+            'first_name' => $user->first_name ?? null,
+            'last_name'  => $user->last_name ?? null,
+            'email'      => $user->email ?? null,
+        ];
+    }
+
+    /**
      * Aktualizuje profil uživatele.
      * Heslo se aktualizuje jen pokud je neprázdné.
      *
@@ -73,7 +93,7 @@ final class ProfileFacade
      * @throws DuplicateEmailException
      */
     public function updateProfile(int $userId, string $username, string $email,
-        string $firstName, string $lastName, string $password): void
+        string $firstName, string $lastName, string $password, bool $isPublic = true): void
     {
         // Kontrola unikátnosti — ignorujeme vlastní aktuální hodnoty
         if ($this->database->table('users')
@@ -90,6 +110,7 @@ final class ProfileFacade
             'email'      => $email,
             'first_name' => $firstName ?: null,
             'last_name'  => $lastName ?: null,
+            'is_public'  => $isPublic ? 1 : 0,
         ];
 
         if ($password !== '') {

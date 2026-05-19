@@ -23,13 +23,24 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
     {
         parent::startup();
         $this->setLayout('layout');
-        if (!$this->getUser()->isLoggedIn()) {
-            $this->redirect('Sign:in');
+    }
+
+    /** Veřejný profil jiného uživatele — nevyžaduje přihlášení. */
+    public function renderView(int $id): void
+    {
+        $profile = $this->profileFacade->getPublicProfile($id);
+        if (!$profile) {
+            $this->error('Uživatel nenalezen.', 404);
         }
+        $this->template->profile = $profile;
     }
 
     public function renderDefault(): void
     {
+        if (!$this->getUser()->isLoggedIn()) {
+            $this->redirect('Sign:in');
+        }
+
         $userId = $this->getUser()->getId();
         $row = $this->database->table('users')->get($userId);
 
@@ -45,6 +56,7 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
             'last_name'  => $row->last_name  ?? '',
             'username'   => $row->username,
             'email'      => $row->email ?? '',
+            'is_public'  => (bool) ($row->is_public ?? true),
         ]);
     }
 
@@ -72,6 +84,8 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
                 ->setRequired('Zadejte potvrzení hesla.')
                 ->addRule(Form::Equal, 'Hesla se neshodují.', $form['password']);
 
+        $form->addCheckbox('is_public', 'Veřejný profil (ostatní uvidí moje údaje)');
+
         $form->addSubmit('send', 'Uložit změny');
         $form->onSuccess[] = [$this, 'editFormSucceeded'];
         return $form;
@@ -87,6 +101,7 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
                 $values->first_name,
                 $values->last_name,
                 $values->password,
+                $values->is_public,
             );
             $this->flashMessage('Profil byl úspěšně aktualizován.', 'success');
             $this->redirect('this');
