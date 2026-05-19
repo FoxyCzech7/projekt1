@@ -2,6 +2,22 @@
 
 <h1>Moje koncepty</h1>
 
+{if count($scheduled) > 0}
+    <h2>Naplánované ke zveřejnění</h2>
+    {foreach $scheduled as $post}
+        <div class="post" style="border-left-color: #c8a010">
+            <div class="date">{$post->created_at|date:'j. n. Y H:i'}</div>
+            <h2 style="text-align:left">{$post->title|escape}</h2>
+            <p style="color:#c8a010; font-size:.88em">
+                ⏰ Zveřejní se {$post->created_at|date:'j. n. Y'} v {$post->created_at|date:'H:i'}
+            </p>
+            <div class="post-actions">
+                <a n:href="PostForm:edit $post->id" class="like-btn">Upravit</a>
+            </div>
+        </div>
+    {/foreach}
+{/if}
+
 {if count($drafts) === 0}
     <p class="muted" style="text-align:center; padding: 40px">
         Nemáte žádné koncepty.

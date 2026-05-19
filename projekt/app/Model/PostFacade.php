@@ -48,6 +48,12 @@ final class PostFacade
         return $this->postsRepository->getUserDrafts($userId);
     }
 
+    /** Příspěvky s published statusem ale budoucím created_at — čekají na zveřejnění. */
+    public function getUserScheduled(int $userId): array
+    {
+        return $this->postsRepository->getUserScheduled($userId);
+    }
+
     public function createPost(
         string $title, string $content, int $userId,
         ?string $image = null, bool $isPremium = false,

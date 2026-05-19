@@ -33,7 +33,9 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
 
     public function renderDrafts(): void
     {
-        $this->template->drafts = $this->postFacade->getUserDrafts($this->getUser()->getId());
+        $userId = $this->getUser()->getId();
+        $this->template->drafts    = $this->postFacade->getUserDrafts($userId);
+        $this->template->scheduled = $this->postFacade->getUserScheduled($userId);
     }
 
     public function renderCreate(): void
@@ -103,7 +105,7 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
         $form->addText('scheduled_at', 'Plánované zveřejnění:')
             ->setRequired(false)
             ->setHtmlType('datetime-local')
-            ->setOption('description', 'Ponechte prázdné pro okamžité zveřejnění');
+            ->setOption('description', 'Příspěvek se zobrazí automaticky v nastavený čas. Status se ignoruje — plánované příspěvky jsou vždy published.');
 
         $form->addUpload('image', 'Úvodní obrázek:')
             ->setRequired(false)
@@ -139,12 +141,14 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
                 ? $this->saveImage($data->image, $uploadsDir, $id)
                 : $post->image;
 
-            // Server-side guard: is_premium smí být true jen pro prémiové/admin uživatele.
             $isPremium   = $this->canCreatePremiumPost() && $data->is_premium;
             $scheduledAt = !empty($data->scheduled_at) ? new \DateTime($data->scheduled_at) : null;
+            // Pokud je datum v budoucnosti, status musí být 'published' —
+            // jinak by draft filtr bránil zveřejnění navždy.
+            $status = ($scheduledAt && $scheduledAt > new \DateTime()) ? 'published' : $data->status;
             $this->postFacade->updatePost(
                 $id, $data->title, $data->content, $imagePath, $isPremium,
-                $data->status, $scheduledAt, $this->getUser()->getId(),
+                $status, $scheduledAt, $this->getUser()->getId(),
             );
             $this->tagFacade->syncPostTags($id, $data->tags ?? '');
             $this->flashMessage('Příspěvek byl upraven.', 'success');
@@ -159,9 +163,10 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
             // pro pojmenování souboru (image-{postId}.jpg).
             $isPremium   = $this->canCreatePremiumPost() && $data->is_premium;
             $scheduledAt = !empty($data->scheduled_at) ? new \DateTime($data->scheduled_at) : null;
+            $status      = ($scheduledAt && $scheduledAt > new \DateTime()) ? 'published' : ($data->status ?? 'published');
             $newPost = $this->postFacade->createPost(
                 $data->title, $data->content, $this->getUser()->getId(),
-                null, $isPremium, $data->status ?? 'published', $scheduledAt,
+                null, $isPremium, $status, $scheduledAt,
             );
             if ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk()) {
                 $imagePath = $this->saveImage($data->image, $uploadsDir, $newPost->id);

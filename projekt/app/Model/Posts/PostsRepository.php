@@ -48,6 +48,16 @@ class PostsRepository extends BaseRepository
             ->order('created_at DESC');
     }
 
+    public function getUserScheduled(int $userId): array
+    {
+        return $this->getTable()
+            ->where('user_id', $userId)
+            ->where('status', 'published')
+            ->where('created_at > ?', new \DateTime())
+            ->order('created_at ASC')
+            ->fetchAll();
+    }
+
     public function findById(int $id): ?ActiveRow
     {
         return $this->getTable()->get($id);
