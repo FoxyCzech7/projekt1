@@ -24,6 +24,8 @@ body::before {
 
 h1, h2, h3 {
   letter-spacing: 0.04em;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 h1 {
@@ -185,8 +187,60 @@ ul.navig a:hover {
   font-weight: 600;
   letter-spacing: 0.06em;
   font-family: 'Courier New', monospace;
-  margin-bottom: 10px;
+  margin: 0;
 }
+
+.post-nav {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 20px 0;
+}
+.post-nav .back-link {
+  margin: 0;
+}
+
+/* ===== Akce pod příspěvkem ===== */
+.post-actions {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #1a2a08;
+}
+
+
+.btn-detail {
+  display: inline-block;
+  padding: 5px 14px;
+  background: #0d1a28;
+  color: #4a8ac8;
+  border: 1px solid #1a3050;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.btn-detail:hover { background: #162240; color: #7ab0e8; text-decoration: none; }
+
+.btn-edit {
+  display: inline-block;
+  padding: 5px 14px;
+  background: #1a1a08;
+  color: #a8a840;
+  border: 1px solid #3a3a10;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.btn-edit:hover { background: #262610; color: #d0d050; text-decoration: none; }
 
 /* ===== Like tlačítko ===== */
 .like-btn {
@@ -208,6 +262,27 @@ ul.navig a:hover {
   background: #1a2e08;
   border-color: #4a8a10;
   color: #8ec832;
+  text-decoration: none;
+}
+.like-btn.like-btn--delete {
+  border-color: #3a1010;
+  color: #c03030;
+}
+.like-btn.like-btn--delete:hover {
+  background: #1a0808;
+  border-color: #5a1a1a;
+  color: #e04040;
+  text-decoration: none;
+}
+.like-btn.like-btn--reply {
+  border-color: #1a3050;
+  color: #4a8ac8;
+  background: none;
+}
+.like-btn.like-btn--reply:hover {
+  background: #0d1828;
+  border-color: #2a5080;
+  color: #7ab0e8;
   text-decoration: none;
 }
 

@@ -25,19 +25,19 @@
             {$comment->likes_count ?? 0}
         </a>
 
-        <button class="reply-btn"
-                data-id="{$comment->id}"
-                data-author="{$comment->username|escape}">
+        <button class="like-btn like-btn--reply"
+                data-reply-id="{$comment->id}"
+                data-reply-author="{$comment->username|escape}">
             ↩ Odpovědět
         </button>
 
         {if $user->isInRole('admin')
             || (($user->isInRole('author') || $user->isInRole('user')) && $comment->user_id === $user->getId())}
+            <a n:href="Edit:edit id => $comment->id, type => 'comment'"
+               class="like-btn">Upravit</a>
             <a n:href="Comment:delete $comment->id"
                onclick="return confirm('Opravdu chcete smazat tento komentář?')"
-               class="delete-post">Smazat</a>
-            <a n:href="Edit:edit id => $comment->id, type => 'comment'"
-               class="edit-comment">Upravit</a>
+               class="like-btn like-btn--delete">Smazat</a>
         {/if}
     </div>
 
@@ -52,17 +52,16 @@
 
 {block content}
 
-<p><a class="back-link" n:href="Home:default">← Zpět na úvodní stránku</a></p>
-
-{if $user->isInRole('admin') || $post->user_id === $user->getId()}
-    <p>
+<div class="post-nav">
+    <a class="back-link" n:href="Home:default">← Zpět</a>
+    {if $user->isInRole('admin') || $post->user_id === $user->getId()}
         <a n:href="PostForm:edit $post->id" class="back-link">Upravit příspěvek</a>
-    </p>
-{/if}
+    {/if}
+    <span class="date">{$post->created_at|date:'j. n. Y'}</span>
+</div>
 
 <div>
-    <div style="position: relative; margin-bottom: 1em;">
-        <div class="date">{$post->created_at|date:'j. n. Y'}</div>
+    <div>
         <h1 n:block="title">{$post->title|escape}</h1>
     </div>
 
@@ -149,10 +148,10 @@
         const formTitle   = document.getElementById('comment-form-title');
         const formSection = document.getElementById('comment-form-section');
 
-        document.querySelectorAll('.reply-btn').forEach(btn => {
+        document.querySelectorAll('[data-reply-id]').forEach(btn => {
             btn.addEventListener('click', () => {
-                const id     = btn.dataset.id;
-                const author = btn.dataset.author;
+                const id     = btn.dataset.replyId;
+                const author = btn.dataset.replyAuthor;
 
                 parentInput.value   = id;
                 replyAuthor.textContent = author;
