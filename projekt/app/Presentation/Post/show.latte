@@ -66,6 +66,14 @@
     </div>
 
     <div class="post">
+        {if $tags}
+            <div class="tags-list">
+                {foreach $tags as $tag}
+                    <a n:href="Home:default tag => $tag->slug" class="tag">{$tag->name|escape}</a>
+                {/foreach}
+            </div>
+        {/if}
+
         {if $post->image}
             <div class="post-image">
                 <img src="{$basePath}/{$post->image}" alt="Obrázek k příspěvku"

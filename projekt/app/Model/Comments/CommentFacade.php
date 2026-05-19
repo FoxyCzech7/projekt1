@@ -3,19 +3,15 @@
 namespace App\Model\Comments;
 
 use App\Model\Likes\CommentLikesRepository;
+use App\Model\Notifications\NotificationFacade;
 use Nette\Database\Table\ActiveRow;
 
-/**
- * Fasáda pro operace s komentáři.
- *
- * Orchestruje CommentsRepository a CommentLikesRepository.
- * Presentery neví o databázových tabulkách — volají jen tuto třídu.
- */
 final class CommentFacade
 {
     public function __construct(
         private CommentsRepository $commentsRepository,
         private CommentLikesRepository $commentLikesRepository,
+        private NotificationFacade $notificationFacade,
     ) {}
 
     public function findById(int $id): ?ActiveRow
@@ -83,15 +79,28 @@ final class CommentFacade
         ?int $parentId = null,
     ): void {
         $this->commentsRepository->insert([
-            'post_id' => $postId,
-            'name' => $name,
-            'email' => $email,
-            'content' => $content,
+            'post_id'    => $postId,
+            'name'       => $name,
+            'email'      => $email,
+            'content'    => $content,
             'created_at' => new \DateTimeImmutable(),
-            'user_id' => $userId,
-            'likes_count' => 0,
-            'parent_id' => $parentId,
+            'user_id'    => $userId,
+            'likes_count'=> 0,
+            'parent_id'  => $parentId,
         ]);
+
+        // Notifikace autorovi rodičovského komentáře
+        if ($parentId !== null && $userId !== null) {
+            $parent = $this->commentsRepository->findById($parentId);
+            if ($parent && $parent->user_id !== null && $parent->user_id !== $userId) {
+                $this->notificationFacade->create(
+                    $parent->user_id,
+                    'comment_reply',
+                    $name . ' odpověděl/a na váš komentář.',
+                    '/post/show/' . $postId,
+                );
+            }
+        }
     }
 
     public function deleteComment(int $id): void
@@ -120,6 +129,17 @@ final class CommentFacade
         } else {
             $this->commentLikesRepository->insert(['user_id' => $userId, 'comment_id' => $commentId]);
             $this->commentsRepository->incrementLikes($commentId);
+
+            // Notifikace autorovi komentáře
+            $comment = $this->commentsRepository->findById($commentId);
+            if ($comment && $comment->user_id !== null && $comment->user_id !== $userId) {
+                $this->notificationFacade->create(
+                    $comment->user_id,
+                    'comment_like',
+                    'Někdo lajknul váš komentář.',
+                    '/post/show/' . $comment->post_id,
+                );
+            }
         }
     }
 

@@ -15,6 +15,10 @@
 			<div class="site-title">Vojenská Technika</div>
 			<div class="site-subtitle">Zpravodajství · Analýzy · Bojové systémy</div>
 		</div>
+		<form class="header-search" action="{link Search:default}" method="get">
+			<input type="text" name="q" placeholder="Hledat…">
+			<button type="submit">🔍</button>
+		</form>
 	</div>
 
 	<ul class="navig">
@@ -26,6 +30,16 @@
 			{/if}
 			<li><a n:href="Premium:plans" class="nav-premium">★ Premium</a></li>
 			<li><a n:href="PostForm:create">+ Nový článek</a></li>
+			{if $user->isInRole('author') || $user->isInRole('admin')}
+				<li><a n:href="PostForm:drafts">Koncepty</a></li>
+			{/if}
+			<li><a n:href="Profile:default">Profil</a></li>
+			<li>
+				{var $unread = $notifCount ?? 0}
+				<a n:href="Notifications:default" class="nav-notif {if $unread > 0}nav-notif--active{/if}">
+					🔔{if $unread > 0}<span class="notif-badge">{$unread}</span>{/if}
+				</a>
+			</li>
 			<li><a n:href="Sign:out">Odhlásit</a></li>
 		{else}
 			<li><a n:href="Premium:plans" class="nav-premium">★ Premium</a></li>
@@ -37,6 +51,16 @@
 	<div n:foreach="$flashes as $flash" n:class="flash, $flash->type">{$flash->message}</div>
 
 	{block content}{/block}
+
+	<footer class="site-footer">
+		<div class="footer-inner">
+			<span class="footer-copy">© {date('Y')} Vojenská Technika</span>
+			<form class="footer-newsletter" action="{link Newsletter:subscribe}" method="post">
+				<input type="email" name="email" placeholder="Odebírat novinky (email)">
+				<button type="submit">Přihlásit</button>
+			</form>
+		</div>
+	</footer>
 
 	{block scripts}
 		<script src="https://unpkg.com/nette-forms@3"></script>

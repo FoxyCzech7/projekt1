@@ -1,0 +1,82 @@
+<?php
+
+namespace App\Model\Tags;
+
+use Nette\Database\Explorer;
+use Nette\Database\Table\ActiveRow;
+
+final class TagFacade
+{
+    public function __construct(private Explorer $database) {}
+
+    public function getAllTags(): array
+    {
+        return $this->database->table('tags')->order('name ASC')->fetchAll();
+    }
+
+    public function findBySlug(string $slug): ?ActiveRow
+    {
+        return $this->database->table('tags')->where('slug', $slug)->fetch();
+    }
+
+    public function getPostTags(int $postId): array
+    {
+        return $this->database->query(
+            'SELECT tags.* FROM tags
+             JOIN post_tags ON post_tags.tag_id = tags.id
+             WHERE post_tags.post_id = ?
+             ORDER BY tags.name',
+            $postId
+        )->fetchAll();
+    }
+
+    /**
+     * Synchronizuje tagy příspěvku z čárkami odděleného textu.
+     * Chybějící tagy se automaticky vytvoří.
+     */
+    public function syncPostTags(int $postId, string $tagString): void
+    {
+        $this->database->table('post_tags')->where('post_id', $postId)->delete();
+
+        $names = array_filter(array_map('trim', explode(',', $tagString)));
+        foreach ($names as $name) {
+            $slug = $this->slugify($name);
+            $tag  = $this->database->table('tags')->where('slug', $slug)->fetch()
+                 ?? $this->database->table('tags')->insert(['name' => $name, 'slug' => $slug]);
+            $this->database->table('post_tags')->insert([
+                'post_id' => $postId,
+                'tag_id'  => $tag->id,
+            ]);
+        }
+    }
+
+    public function getPostTagString(int $postId): string
+    {
+        $tags = $this->getPostTags($postId);
+        return implode(', ', array_map(fn($t) => $t->name, $tags));
+    }
+
+    /** Vrátí published příspěvky s daným tagem. */
+    public function getPostsByTag(string $slug): array
+    {
+        return $this->database->query(
+            "SELECT posts.id, posts.title, posts.content, posts.created_at,
+                    posts.likes_count, posts.views, posts.is_premium, posts.image
+             FROM posts
+             JOIN post_tags ON post_tags.post_id = posts.id
+             JOIN tags      ON tags.id = post_tags.tag_id
+             WHERE tags.slug = ?
+               AND posts.status = 'published'
+               AND posts.created_at <= NOW()
+             ORDER BY posts.created_at DESC",
+            $slug
+        )->fetchAll();
+    }
+
+    private function slugify(string $text): string
+    {
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        $text = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $text));
+        return trim($text, '-');
+    }
+}

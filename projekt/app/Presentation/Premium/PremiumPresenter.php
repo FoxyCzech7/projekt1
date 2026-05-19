@@ -9,7 +9,7 @@ use Nette\Application\UI\Presenter;
 /**
  * Správa prémiového předplatného — výběr plánu, košík, platba, potvrzení.
  */
-final class PremiumPresenter extends Presenter
+final class PremiumPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private CartFacade $cartFacade,

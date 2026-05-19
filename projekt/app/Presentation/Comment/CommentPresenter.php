@@ -5,7 +5,7 @@ namespace App\Presentation\Comment;
 use App\Model\Comments\CommentFacade;
 use Nette\Application\UI\Presenter;
 
-final class CommentPresenter extends Presenter
+final class CommentPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private CommentFacade $commentFacade,

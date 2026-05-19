@@ -17,7 +17,7 @@ use App\Model\Auth\DuplicateEmailException;
  * Pro registraci používá UserManager — presenter tak neví nic o hashování
  * hesel ani o struktuře tabulky users.
  */
-final class SignPresenter extends Nette\Application\UI\Presenter
+final class SignPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private MyAuthenticator $authenticator,

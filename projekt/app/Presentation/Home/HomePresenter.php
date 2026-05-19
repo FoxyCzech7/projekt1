@@ -11,7 +11,7 @@ use Nette\Utils\Paginator;
  * Zobrazuje seznam příspěvků s stránkováním.
  * Deleguje veškerou práci s daty na PostFacade — sám neví nic o DB.
  */
-final class HomePresenter extends Presenter
+final class HomePresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private PostFacade $postFacade,

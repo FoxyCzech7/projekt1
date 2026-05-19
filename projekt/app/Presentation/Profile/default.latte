@@ -1,0 +1,142 @@
+{block content}
+
+<h1>Můj profil</h1>
+
+{* ── Hlavička profilu ── *}
+<div class="profile-hero">
+    <div class="profile-hero-info">
+        <div class="profile-avatar">
+            {mb_strtoupper(mb_substr($userData->username, 0, 1))}
+        </div>
+        <div>
+            <div class="profile-name">
+                {if $userData->first_name || $userData->last_name}
+                    {$userData->first_name|escape} {$userData->last_name|escape}
+                {else}
+                    {$userData->username|escape}
+                {/if}
+            </div>
+            <div class="profile-meta">
+                <span class="role-badge role-{$userData->role}">{$userData->role}</span>
+                {if $isPremium}
+                    <span class="premium-badge">★ Premium</span>
+                {else}
+                    <a n:href="Premium:plans" class="profile-get-premium">Získat Premium →</a>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>
+
+{* ── Statistiky ── *}
+<section class="profile-card">
+    <h2>Statistiky</h2>
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="stat-value">{$stats['post_count']}</span>
+            <span class="stat-label">Příspěvků</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-value">{$stats['comment_count']}</span>
+            <span class="stat-label">Komentářů</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-value">{$stats['post_likes_received']}</span>
+            <span class="stat-label">Lajků na příspěvcích</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-value">{$stats['comment_likes_received']}</span>
+            <span class="stat-label">Lajků na komentářích</span>
+        </div>
+    </div>
+</section>
+
+{* ── Záložky ── *}
+{if count($bookmarks) > 0}
+<section class="profile-card">
+    <h2>Záložky</h2>
+    <ul class="liked-list">
+        {foreach $bookmarks as $b}
+            <li>
+                <a n:href="Post:show $b->id">{$b->title|escape}</a>
+                <span class="liked-date">{$b->created_at|date:'j. n. Y'}</span>
+            </li>
+        {/foreach}
+    </ul>
+</section>
+{/if}
+
+{* ── Lajknutý obsah ── *}
+<div class="profile-liked-grid">
+
+    <section class="profile-card">
+        <h2>Lajknuté příspěvky</h2>
+        {if count($likedPosts) > 0}
+            <ul class="liked-list">
+                {foreach $likedPosts as $p}
+                    <li>
+                        <a n:href="Post:show $p->id">{$p->title|escape}</a>
+                        <span class="liked-date">{$p->created_at|date:'j. n. Y'}</span>
+                    </li>
+                {/foreach}
+            </ul>
+        {else}
+            <p class="muted">Zatím jste nic nelajknuli.</p>
+        {/if}
+    </section>
+
+    <section class="profile-card">
+        <h2>Lajknuté komentáře</h2>
+        {if count($likedComments) > 0}
+            <div class="liked-comments-scroll">
+                {foreach $likedComments as $c}
+                    <a n:href="Post:show $c->post_id" class="liked-comment-card">
+                        <div class="liked-comment-content">{$c->content|truncate:160|escape}</div>
+                        <div class="liked-comment-source">↗ {$c->post_title|truncate:50|escape}</div>
+                    </a>
+                {/foreach}
+            </div>
+        {else}
+            <p class="muted">Zatím jste nic nelajknuli.</p>
+        {/if}
+    </section>
+
+</div>
+
+{* ── Úprava profilu ── *}
+<section class="profile-card profile-edit-card">
+    <h2>Upravit profil</h2>
+    {form editForm}
+        <div class="edit-form-grid">
+            <div class="form-group">
+                {label first_name /}
+                {input first_name}
+            </div>
+            <div class="form-group">
+                {label last_name /}
+                {input last_name}
+            </div>
+            <div class="form-group">
+                {label username /}
+                {input username}
+            </div>
+            <div class="form-group">
+                {label email /}
+                {input email}
+            </div>
+            <div class="form-group">
+                {label password /}
+                {input password}
+            </div>
+            <div class="form-group">
+                {label password_confirm /}
+                {input password_confirm}
+            </div>
+        </div>
+        <div class="edit-form-submit">
+            {input send}
+        </div>
+    {/form}
+</section>
+
+{/block}

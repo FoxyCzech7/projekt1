@@ -1,0 +1,34 @@
+{block content}
+
+<h1>Vyhledávání</h1>
+
+<form action="{link Search:default}" method="get" class="search-form">
+    <input type="text" name="q" value="{$q|escape}" placeholder="Hledat v článcích…" autofocus>
+    <button type="submit">Hledat</button>
+</form>
+
+{if $q !== ''}
+    <p class="search-info">
+        {if count($results) > 0}
+            Nalezeno <strong>{count($results)}</strong> {count($results) === 1 ? 'výsledek' : (count($results) < 5 ? 'výsledky' : 'výsledků')} pro „<em>{$q|escape}</em>"
+        {else}
+            Žádné výsledky pro „<em>{$q|escape}</em>"
+        {/if}
+    </p>
+
+    {foreach $results as $post}
+        <div class="post search-result">
+            {if $post->is_premium}
+                <span class="premium-badge">★ Premium</span>
+            {/if}
+            <div class="date">{$post->created_at|date:'j. n. Y'}</div>
+            <h2><a n:href="Post:show $post->id">{$post->title|escape}</a></h2>
+            <p>{$post->content|stripHtml|truncate:200|escape}</p>
+            <div class="post-actions">
+                <a n:href="Post:show $post->id" class="like-btn">Číst</a>
+            </div>
+        </div>
+    {/foreach}
+{/if}
+
+{/block}

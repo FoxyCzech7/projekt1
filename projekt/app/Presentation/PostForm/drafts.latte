@@ -1,0 +1,28 @@
+{block content}
+
+<h1>Moje koncepty</h1>
+
+{if count($drafts) === 0}
+    <p class="muted" style="text-align:center; padding: 40px">
+        Nemáte žádné koncepty.
+        <a n:href="PostForm:create">Vytvořit příspěvek →</a>
+    </p>
+{else}
+    <div>
+        {foreach $drafts as $post}
+            <div class="post">
+                <div class="date">{$post->created_at|date:'j. n. Y'}</div>
+                <h2 style="text-align:left">{$post->title|escape}</h2>
+                <p style="color:#7a9860; font-size:.88em">Koncept — nepublikováno</p>
+                <div class="post-actions">
+                    <a n:href="PostForm:edit $post->id" class="like-btn">Upravit</a>
+                    <a n:href="Home:delete $post->id"
+                       onclick="return confirm('Smazat tento koncept?')"
+                       class="like-btn like-btn--delete">Smazat</a>
+                </div>
+            </div>
+        {/foreach}
+    </div>
+{/if}
+
+{/block}

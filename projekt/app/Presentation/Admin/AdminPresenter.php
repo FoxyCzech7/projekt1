@@ -10,7 +10,7 @@ use Nette\Application\UI\Presenter;
  * Admin sekce — přehled uživatelů a jejich profily.
  * Přístupný pouze pro roli 'admin'.
  */
-final class AdminPresenter extends Presenter
+final class AdminPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private UserProfileFacade $userProfileFacade,

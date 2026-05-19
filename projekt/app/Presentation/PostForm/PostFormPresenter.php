@@ -6,17 +6,19 @@ use Nette;
 use Nette\Application\UI\Form;
 use App\Model\PostFacade;
 use App\Model\Premium\PremiumFacade;
+use App\Model\Tags\TagFacade;
 use Nette\Security\Authorizator;
 
 /**
  * Formulář pro vytvoření a editaci příspěvku.
  * Přístup povolen jen přihlášeným autorům a adminům.
  */
-final class PostFormPresenter extends Nette\Application\UI\Presenter
+final class PostFormPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private PostFacade $postFacade,
         private PremiumFacade $premiumFacade,
+        private TagFacade $tagFacade,
         private Authorizator $authorizator,
     ) {}
 
@@ -27,6 +29,11 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
             $this->flashMessage('Pro tuto akci musíte být přihlášeni.', 'error');
             $this->redirect('Sign:in');
         }
+    }
+
+    public function renderDrafts(): void
+    {
+        $this->template->drafts = $this->postFacade->getUserDrafts($this->getUser()->getId());
     }
 
     public function renderCreate(): void
@@ -48,12 +55,20 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
             $this->redirect('Post:show', $id);
         }
 
+        $scheduledAt = isset($post->scheduled_at) && $post->scheduled_at
+            ? (new \DateTime($post->scheduled_at))->format('Y-m-d\TH:i')
+            : '';
+
         $this['postForm']->setDefaults([
-            'title' => $post->title,
-            'content' => $post->content,
-            'is_premium' => (bool) ($post->is_premium ?? false),
+            'title'        => $post->title,
+            'content'      => $post->content,
+            'is_premium'   => (bool) ($post->is_premium ?? false),
+            'tags'         => $this->tagFacade->getPostTagString($id),
+            'status'       => $post->status ?? 'published',
+            'scheduled_at' => $scheduledAt,
         ]);
-        $this->template->post = $post;
+        $this->template->post      = $post;
+        $this->template->revisions = $this->postFacade->getRevisions($id);
     }
 
     protected function createComponentPostForm(): Form
@@ -75,6 +90,20 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
         } else {
             $form->addHidden('is_premium', '0');
         }
+
+        $form->addText('tags', 'Tagy:')
+            ->setRequired(false)
+            ->setOption('description', 'Oddělte čárkou, např.: tanky, drony, letectvo');
+
+        $form->addSelect('status', 'Stav:', [
+            'published' => 'Publikováno',
+            'draft'     => 'Koncept (draft)',
+        ])->setDefaultValue('published');
+
+        $form->addText('scheduled_at', 'Plánované zveřejnění:')
+            ->setRequired(false)
+            ->setHtmlType('datetime-local')
+            ->setOption('description', 'Ponechte prázdné pro okamžité zveřejnění');
 
         $form->addUpload('image', 'Úvodní obrázek:')
             ->setRequired(false)
@@ -111,8 +140,13 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
                 : $post->image;
 
             // Server-side guard: is_premium smí být true jen pro prémiové/admin uživatele.
-            $isPremium = $this->canCreatePremiumPost() && $data->is_premium;
-            $this->postFacade->updatePost($id, $data->title, $data->content, $imagePath, $isPremium);
+            $isPremium   = $this->canCreatePremiumPost() && $data->is_premium;
+            $scheduledAt = !empty($data->scheduled_at) ? new \DateTime($data->scheduled_at) : null;
+            $this->postFacade->updatePost(
+                $id, $data->title, $data->content, $imagePath, $isPremium,
+                $data->status, $scheduledAt, $this->getUser()->getId(),
+            );
+            $this->tagFacade->syncPostTags($id, $data->tags ?? '');
             $this->flashMessage('Příspěvek byl upraven.', 'success');
             $this->redirect('Post:show', $id);
         } else {
@@ -123,19 +157,18 @@ final class PostFormPresenter extends Nette\Application\UI\Presenter
             }
             // Post se vytvoří nejdřív bez obrázku, aby existovalo jeho ID
             // pro pojmenování souboru (image-{postId}.jpg).
-            $isPremium = $this->canCreatePremiumPost() && $data->is_premium;
+            $isPremium   = $this->canCreatePremiumPost() && $data->is_premium;
+            $scheduledAt = !empty($data->scheduled_at) ? new \DateTime($data->scheduled_at) : null;
             $newPost = $this->postFacade->createPost(
-                $data->title,
-                $data->content,
-                $this->getUser()->getId(),
-                null,
-                $isPremium,
+                $data->title, $data->content, $this->getUser()->getId(),
+                null, $isPremium, $data->status ?? 'published', $scheduledAt,
             );
             if ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk()) {
                 $imagePath = $this->saveImage($data->image, $uploadsDir, $newPost->id);
                 $this->postFacade->updatePost($newPost->id, $newPost->title, $newPost->content, $imagePath);
             }
-            $this->flashMessage('Příspěvek byl vytvořen.', 'success');
+            $this->tagFacade->syncPostTags($newPost->id, $data->tags ?? '');
+            $this->flashMessage('Příspěvek byl ' . ($data->status === 'draft' ? 'uložen jako koncept.' : 'vytvořen.'), 'success');
             $this->redirect('Post:show', $newPost->id);
         }
     }

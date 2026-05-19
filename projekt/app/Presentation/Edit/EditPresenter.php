@@ -7,7 +7,7 @@ use Nette\Application\UI\Form;
 use App\Model\PostFacade;
 use App\Model\Comments\CommentFacade;
 
-final class EditPresenter extends Nette\Application\UI\Presenter
+final class EditPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private PostFacade $postFacade,

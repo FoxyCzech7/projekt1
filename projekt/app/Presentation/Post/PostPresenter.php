@@ -4,21 +4,25 @@ namespace App\Presentation\Post;
 
 use Nette;
 use Nette\Application\UI\Form;
+use App\Model\Bookmarks\BookmarkFacade;
 use App\Model\PostFacade;
 use App\Model\Comments\CommentFacade;
 use App\Model\Premium\PremiumFacade;
+use App\Model\Tags\TagFacade;
 use Nette\Security\Authorizator;
 
 /**
  * Zobrazuje detail příspěvku s komentáři a formulář pro přidání komentáře.
  * Deleguje práci s daty na PostFacade a CommentFacade.
  */
-final class PostPresenter extends Nette\Application\UI\Presenter
+final class PostPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
         private PostFacade $postFacade,
         private CommentFacade $commentFacade,
         private PremiumFacade $premiumFacade,
+        private BookmarkFacade $bookmarkFacade,
+        private TagFacade $tagFacade,
         private Authorizator $authorizator,
     ) {}
 
@@ -42,11 +46,15 @@ final class PostPresenter extends Nette\Application\UI\Presenter
             $this->error('Příspěvek nebyl nalezen.');
         }
         $this->template->post = $post;
+        $this->postFacade->incrementViews($id);
+        $this->template->readingTime = PostFacade::readingTime($post->content);
+        $this->template->tags = $this->tagFacade->getPostTags($id);
 
-        // Admin a prémiový uživatelé vidí vždy celý obsah.
         $user = $this->getUser();
         $this->template->hasFullAccess = $user->isInRole('admin')
             || ($user->isLoggedIn() && $this->premiumFacade->isPremium($user->getId()));
+        $this->template->isBookmarked = $user->isLoggedIn()
+            && $this->bookmarkFacade->isBookmarked($user->getId(), $id);
 
         // Komentáře jsou pole stdClass objektů (ne ActiveRow) — fasáda je obohacuje
         // o username a email uživatele přes ref(), aby šablona nemusela dělat JOIN ručně.
@@ -141,6 +149,17 @@ final class PostPresenter extends Nette\Application\UI\Presenter
         } else {
             $this->redirect('Post:show', $postId);
         }
+    }
+
+    public function handleBookmark(int $postId): void
+    {
+        if (!$this->getUser()->isLoggedIn()) {
+            $this->redirect('Sign:in');
+            return;
+        }
+        $added = $this->bookmarkFacade->toggle($this->getUser()->getId(), $postId);
+        $this->flashMessage($added ? 'Příspěvek byl uložen do záložek.' : 'Záložka byla odebrána.');
+        $this->redirect('this');
     }
 
     public function handleLike(int $postId): void
