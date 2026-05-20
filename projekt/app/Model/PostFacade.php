@@ -9,6 +9,9 @@ use App\Model\Posts\RevisionRepository;
 use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
 
+// Fasáda pro operace s příspěvky — orchestruje PostsRepository, LikesRepository,
+// RevisionRepository a NotificationFacade do jednoho veřejného API pro presentery.
+// Presentery nikdy nevolají jednotlivá repository přímo.
 final class PostFacade
 {
     public function __construct(
@@ -18,42 +21,49 @@ final class PostFacade
         private NotificationFacade $notificationFacade,
     ) {}
 
+    // Vrátí všechny veřejně publikované příspěvky jako Selection (lazy dotaz).
     public function getPublicArticles(): Selection
     {
         return $this->postsRepository->getPublicArticles();
     }
 
+    // Vrátí jednu stránku publikovaných příspěvků pro stránkování ($offset a $limit).
     public function getPublicArticlesPage(int $offset, int $limit): Selection
     {
         return $this->postsRepository->getPublicArticlesPage($offset, $limit);
     }
 
+    // Vrátí celkový počet publikovaných příspěvků — potřebné pro výpočet počtu stránek.
     public function getPublicArticlesCount(): int
     {
         return $this->postsRepository->getPublicArticlesCount();
     }
 
+    // Najde příspěvek podle ID, nebo vrátí null.
     public function findById(int $id): ?ActiveRow
     {
         return $this->postsRepository->findById($id);
     }
 
+    // Najde příspěvek podle přesného názvu — používá se pro detekci duplikátů při importu.
     public function findByTitle(string $title): ?ActiveRow
     {
         return $this->postsRepository->findByTitle($title);
     }
 
+    // Vrátí rozpracované příspěvky (stav 'draft') daného uživatele.
     public function getUserDrafts(int $userId): Selection
     {
         return $this->postsRepository->getUserDrafts($userId);
     }
 
-    /** Příspěvky s published statusem ale budoucím created_at — čekají na zveřejnění. */
+    // Vrátí příspěvky s budoucím datem zveřejnění — jsou published, ale ještě se nezobrazují.
     public function getUserScheduled(int $userId): array
     {
         return $this->postsRepository->getUserScheduled($userId);
     }
 
+    // Vytvoří nový příspěvek; $scheduledAt přepíše created_at pro plánované zveřejnění.
     public function createPost(
         string $title, string $content, int $userId,
         ?string $image = null, bool $isPremium = false,
@@ -62,13 +72,14 @@ final class PostFacade
         return $this->postsRepository->createPost($title, $content, $userId, $image, $isPremium, $status, $scheduledAt);
     }
 
+    // Aktualizuje příspěvek; pokud je zadán $editedBy, před přepsáním uloží revizi.
     public function updatePost(
         int $id, string $title, string $content,
         ?string $image = null, ?bool $isPremium = null,
         ?string $status = null, ?\DateTimeInterface $scheduledAt = null,
         ?int $editedBy = null,
     ): void {
-        // Uložíme revizi před přepsáním
+        // Uložíme revizi před přepsáním, aby šlo příspěvek vrátit do předchozí verze.
         if ($editedBy !== null) {
             $current = $this->postsRepository->findById($id);
             if ($current) {
@@ -78,6 +89,7 @@ final class PostFacade
         $this->postsRepository->updatePost($id, $title, $content, $image, $isPremium, $status, $scheduledAt);
     }
 
+    // Aktualizuje obsah příspěvku a vždy uloží revizi (zjednodušené API pro EditPresenter).
     public function updatePostContent(int $id, string $title, string $content, int $editedBy): void
     {
         $post = $this->postsRepository->findById($id);
@@ -87,42 +99,45 @@ final class PostFacade
         }
     }
 
+    // Smaže příspěvek podle ID — kaskádní smazání závislých záznamů řeší DB nebo UserProfileFacade.
     public function deletePost(int $id): void
     {
         $this->postsRepository->delete($id);
     }
 
+    // Zvýší počitadlo zobrazení příspěvku o 1 (volá se při každém renderShow).
     public function incrementViews(int $id): void
     {
         $this->postsRepository->incrementViews($id);
     }
 
-    /** Odhadovaný čas čtení v minutách (200 slov/min). */
+    // Odhaduje dobu čtení v minutách — počítá se rychlostí 200 slov/min, minimum 1 minuta.
     public static function readingTime(string $content): int
     {
         $words = preg_split('/\s+/', trim(strip_tags($content)), -1, PREG_SPLIT_NO_EMPTY);
         return max(1, (int) ceil(count($words) / 200));
     }
 
+    // Vrátí historii revizí daného příspěvku seřazenou od nejnovější.
     public function getRevisions(int $postId): array
     {
         return $this->revisionRepository->getByPost($postId);
     }
 
-    /**
-     * Toggle lajku — notifikuje autora příspěvku (pokud není lajkující sám autor).
-     */
+    // Přidá nebo odebere lajk; notifikuje autora příspěvku pokud není lajkující sám autor.
     public function toggleLike(int $postId, int $userId): void
     {
         $like = $this->likesRepository->findByUserAndPost($userId, $postId);
         if ($like) {
+            // Lajk existuje — odebereme ho a snížíme počitadlo.
             $like->delete();
             $this->postsRepository->decrementLikes($postId);
         } else {
+            // Lajk neexistuje — přidáme ho a zvýšíme počitadlo.
             $this->likesRepository->insert(['user_id' => $userId, 'post_id' => $postId]);
             $this->postsRepository->incrementLikes($postId);
 
-            // Notifikace autorovi příspěvku
+            // Notifikace autorovi příspěvku (ne sobě samému)
             $post = $this->postsRepository->findById($postId);
             if ($post && $post->user_id !== $userId) {
                 $this->notificationFacade->create(
@@ -135,6 +150,7 @@ final class PostFacade
         }
     }
 
+    // Vrátí množinu ID příspěvků, které daný uživatel lajknul — pro zobrazení stavu tlačítka.
     public function getUserLikedPostIds(int $userId, array $postIds): array
     {
         return $this->likesRepository->getUserLikedPostIds($userId, $postIds);

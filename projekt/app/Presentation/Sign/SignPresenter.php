@@ -36,6 +36,9 @@ final class SignPresenter extends \App\Presentation\BasePresenter
 
     public function actionOut(): void
     {
+        // Vymaže session sekci newsletteru — jinak by zůstal zobrazený "Aktivní odběr"
+        // i po přepnutí na jiný účet, protože session je společná pro celý prohlížeč.
+        $this->getSession('newsletter')->remove();
         $this->getUser()->logout();
         $this->flashMessage('Odhlášení bylo úspěšné.');
         $this->redirect('Home:');

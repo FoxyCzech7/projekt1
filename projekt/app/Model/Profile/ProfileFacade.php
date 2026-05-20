@@ -9,7 +9,11 @@ use Nette\Security\Passwords;
 
 /**
  * Fasáda pro profil přihlášeného uživatele.
- * Statistiky, lajknutý obsah a úprava vlastních údajů.
+ * Statistiky, lajknutý obsah, úprava vlastních údajů a načítání cizích profilů.
+ *
+ * Pracuje přímo s Explorer (ne přes repository) protože potřebuje
+ * cross-table dotazy (JOIN, agregace) které by v repository pattern
+ * generovaly zbytečně mnoho dílčích dotazů.
  */
 final class ProfileFacade
 {
@@ -18,7 +22,10 @@ final class ProfileFacade
         private Passwords $passwords,
     ) {}
 
-    /** Agregované statistiky uživatele. */
+    /**
+     * Vrátí agregované statistiky uživatele — počty příspěvků, komentářů a přijatých lajků.
+     * COALESCE zajistí 0 místo NULL pokud uživatel nemá žádný obsah.
+     */
     public function getStats(int $userId): array
     {
         $commentLikes = (int) $this->database->query(
@@ -37,7 +44,10 @@ final class ProfileFacade
         ];
     }
 
-    /** Příspěvky, které uživatel lajknul (jen id, title, created_at). */
+    /**
+     * Vrátí příspěvky, které uživatel lajknul.
+     * Seřazené od nejnovějšího — JOIN přes tabulku likes.
+     */
     public function getLikedPosts(int $userId): array
     {
         return $this->database->query(
@@ -50,7 +60,9 @@ final class ProfileFacade
         )->fetchAll();
     }
 
-    /** Komentáře, které uživatel lajknul, s názvem příspěvku. */
+    /**
+     * Vrátí komentáře, které uživatel lajknul, včetně názvu příslušného příspěvku.
+     */
     public function getLikedComments(int $userId): array
     {
         return $this->database->query(
@@ -66,8 +78,11 @@ final class ProfileFacade
     }
 
     /**
-     * Vrátí veřejné údaje o uživateli pro zobrazení cizího profilu.
-     * Vrátí null pokud uživatel neexistuje.
+     * Vrátí základní veřejné informace o uživateli pro zobrazení cizího profilu.
+     * Vrátí null pokud uživatel s daným ID neexistuje.
+     *
+     * Pole is_public určuje, zda šablona zobrazí plný profil nebo jen username
+     * s hláškou "profil je soukromý".
      */
     public function getPublicProfile(int $userId): ?object
     {
@@ -78,7 +93,7 @@ final class ProfileFacade
         return (object) [
             'id'         => $user->id,
             'username'   => $user->username,
-            'is_public'  => (bool) ($user->is_public ?? true),
+            'is_public'  => (bool) ($user->is_public ?? true), // Výchozí true — staré účty bez sloupce jsou veřejné
             'first_name' => $user->first_name ?? null,
             'last_name'  => $user->last_name ?? null,
             'email'      => $user->email ?? null,
@@ -86,16 +101,16 @@ final class ProfileFacade
     }
 
     /**
-     * Aktualizuje profil uživatele.
-     * Heslo se aktualizuje jen pokud je neprázdné.
+     * Aktualizuje profil přihlášeného uživatele.
+     * Heslo se přehashuje a uloží jen pokud bylo vyplněno (neprázdný řetězec).
      *
-     * @throws DuplicateNameException
-     * @throws DuplicateEmailException
+     * @throws DuplicateNameException pokud username již používá jiný uživatel
+     * @throws DuplicateEmailException pokud email již používá jiný uživatel
      */
     public function updateProfile(int $userId, string $username, string $email,
         string $firstName, string $lastName, string $password, bool $isPublic = true): void
     {
-        // Kontrola unikátnosti — ignorujeme vlastní aktuální hodnoty
+        // Kontrola unikátnosti — podmínka "id != userId" ignoruje vlastní aktuální hodnoty
         if ($this->database->table('users')
             ->where('username', $username)->where('id != ?', $userId)->fetch()) {
             throw new DuplicateNameException('Toto uživatelské jméno je již použito.');
@@ -108,11 +123,12 @@ final class ProfileFacade
         $data = [
             'username'   => $username,
             'email'      => $email,
-            'first_name' => $firstName ?: null,
+            'first_name' => $firstName ?: null, // Prázdný řetězec → NULL v DB
             'last_name'  => $lastName ?: null,
             'is_public'  => $isPublic ? 1 : 0,
         ];
 
+        // Heslo se aktualizuje pouze pokud uživatel zadal nové — jinak zůstane původní
         if ($password !== '') {
             $data['password'] = $this->passwords->hash($password);
         }

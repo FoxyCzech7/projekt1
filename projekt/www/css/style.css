@@ -77,8 +77,6 @@ a:hover {
   font-size: 2.2em;
   line-height: 1;
 }
-.site-header-text {
-}
 .site-title {
   font-size: 1.5em;
   font-weight: 900;
@@ -1318,9 +1316,9 @@ a.button:hover {
 }
 .footer-inner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  gap: 12px;
   gap: 14px;
   max-width: 860px;
   margin: 0 auto;
@@ -1394,6 +1392,9 @@ a.button:hover {
 .footer-newsletter-unsub:hover {
   color: #c06020;
   border-color: #7a4010;
+}
+.footer-newsletter-change {
+  text-align: center;
 }
 .footer-newsletter-change summary {
   cursor: pointer;
