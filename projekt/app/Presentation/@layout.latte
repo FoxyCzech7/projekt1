@@ -55,10 +55,30 @@
 	<footer class="site-footer">
 		<div class="footer-inner">
 			<span class="footer-copy">© {date('Y')} Vojenská Technika</span>
-			<form class="footer-newsletter" action="{link Newsletter:subscribe}" method="post">
-				<input type="email" name="email" placeholder="Odebírat novinky (email)">
-				<button type="submit">Přihlásit</button>
-			</form>
+
+			{if $subscribedEmail ?? false}
+				<div class="footer-newsletter footer-newsletter--active">
+					<div class="footer-newsletter-status">
+						<span class="footer-newsletter-check">✓</span>
+						<span>Aktivní odběr novinek</span>
+						<span class="footer-newsletter-email">{$subscribedEmail|escape}</span>
+						<a n:href="Newsletter:unsubscribe $subscribedEmail" class="footer-newsletter-unsub"
+						   onclick="return confirm('Odhlásit odběr novinek?')">Odhlásit</a>
+					</div>
+					<details class="footer-newsletter-change">
+						<summary>Změnit email</summary>
+						<form action="{link Newsletter:change}" method="post">
+							<input type="email" name="email" placeholder="Nový e-mail" required>
+							<button type="submit">Uložit</button>
+						</form>
+					</details>
+				</div>
+			{else}
+				<form class="footer-newsletter" action="{link Newsletter:subscribe}" method="post">
+					<input type="email" name="email" placeholder="Odebírat novinky (email)">
+					<button type="submit">Přihlásit</button>
+				</form>
+			{/if}
 		</div>
 	</footer>
 

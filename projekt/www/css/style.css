@@ -1362,6 +1362,77 @@ a.button:hover {
   background: #3a7010;
 }
 
+.footer-newsletter--active {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-newsletter-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.footer-newsletter-check {
+  color: #6aaa1a;
+  font-size: 1.1em;
+}
+.footer-newsletter-email {
+  color: #8ec832;
+  font-size: 0.88em;
+  font-style: italic;
+}
+.footer-newsletter-unsub {
+  color: #7a4010;
+  font-size: 0.82em;
+  text-decoration: none;
+  border: 1px solid #3a2008;
+  padding: 2px 8px;
+  border-radius: 2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.footer-newsletter-unsub:hover {
+  color: #c06020;
+  border-color: #7a4010;
+}
+.footer-newsletter-change summary {
+  cursor: pointer;
+  font-size: 0.82em;
+  color: #4a7010;
+  list-style: none;
+  display: inline-block;
+  padding: 2px 0;
+}
+.footer-newsletter-change summary:hover {
+  color: #6aaa1a;
+}
+.footer-newsletter-change form {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.footer-newsletter-change input {
+  padding: 5px 10px;
+  background: #0d1208;
+  border: 1px solid #1a2a08;
+  color: #c8d8a0;
+  border-radius: 2px;
+  font-size: 0.85em;
+  width: 200px;
+}
+.footer-newsletter-change button {
+  padding: 5px 12px;
+  background: #2e6008;
+  color: #c8d8a0;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.footer-newsletter-change button:hover {
+  background: #3a7010;
+}
+
 /* ===== Historie úprav ===== */
 .revisions-list {
   margin-top: 16px;

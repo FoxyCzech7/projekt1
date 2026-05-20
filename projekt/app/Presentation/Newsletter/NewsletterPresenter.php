@@ -2,11 +2,8 @@
 
 namespace App\Presentation\Newsletter;
 
-use App\Model\Newsletter\NewsletterFacade;
-
 final class NewsletterPresenter extends \App\Presentation\BasePresenter
 {
-    public function __construct(private NewsletterFacade $newsletterFacade) {}
 
     protected function startup(): void
     {
@@ -29,7 +26,34 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
 
         try {
             $this->newsletterFacade->subscribe($email);
+            $this->getSession('newsletter')->email = $email;
             $this->flashMessage('Přihlášení k odběru bylo úspěšné.', 'success');
+        } catch (\RuntimeException $e) {
+            $this->flashMessage($e->getMessage(), 'error');
+        }
+
+        $this->redirect('Home:default');
+    }
+
+    public function actionChange(): void
+    {
+        $newEmail = trim($this->getHttpRequest()->getPost('email', ''));
+        $session  = $this->getSession('newsletter');
+        $oldEmail = $session->email ?? '';
+
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            $this->flashMessage('Zadejte platný e-mail.', 'error');
+            $this->redirect('Home:default');
+        }
+
+        if ($oldEmail !== '') {
+            $this->newsletterFacade->unsubscribe($oldEmail);
+        }
+
+        try {
+            $this->newsletterFacade->subscribe($newEmail);
+            $session->email = $newEmail;
+            $this->flashMessage('E-mail pro odběr byl změněn.', 'success');
         } catch (\RuntimeException $e) {
             $this->flashMessage($e->getMessage(), 'error');
         }
@@ -40,6 +64,10 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
     public function actionUnsubscribe(string $email): void
     {
         $this->newsletterFacade->unsubscribe($email);
+        $session = $this->getSession('newsletter');
+        if (($session->email ?? '') === $email) {
+            unset($session->email);
+        }
         $this->flashMessage('Odhlášení z odběru bylo úspěšné.');
         $this->redirect('Home:default');
     }
