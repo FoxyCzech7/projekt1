@@ -36,7 +36,7 @@ final class MyAuthenticator implements Authenticator
             throw new AuthenticationException('Nesprávné heslo.');
         }
 
-        return new Identity($user->id, $user->role, ['username' => $user->username]);
+        return new Identity($user->id, $user->role, ['username' => $user->username, 'email' => $user->email]);
     }
 
     //tyto metody umožní SignPresenteru používat databázi a hashování

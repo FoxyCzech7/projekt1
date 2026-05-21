@@ -15,9 +15,7 @@ use Nette\Application\UI\Presenter;
  */
 abstract class BasePresenter extends Presenter
 {
-    // @inject — Nette DI nastaví tuto property automaticky před startup(). Používáme public, protože Nette DI nemůže nastavit private/protected property.
-     /* Díky @inject nemusíme řešit konstruktor a závislosti v potomcích, které často potřebují jiné služby.
-     */ 
+    /** @inject */
     public NotificationFacade $notificationFacade;
 
     /** @inject */
