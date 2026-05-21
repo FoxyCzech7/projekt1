@@ -10,13 +10,6 @@ use App\Model\Auth\UserManager;
 use App\Model\Auth\DuplicateNameException;
 use App\Model\Auth\DuplicateEmailException;
 
-/**
- * Přihlášení, odhlášení a registrace uživatelů.
- *
- * Pro přihlášení používá MyAuthenticator (ověřuje heslo vůči DB).
- * Pro registraci používá UserManager — presenter tak neví nic o hashování
- * hesel ani o struktuře tabulky users.
- */
 final class SignPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(

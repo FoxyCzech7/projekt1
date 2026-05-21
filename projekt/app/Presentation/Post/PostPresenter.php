@@ -11,10 +11,6 @@ use App\Model\Premium\PremiumFacade;
 use App\Model\Tags\TagFacade;
 use Nette\Security\Authorizator;
 
-/**
- * Zobrazuje detail příspěvku s komentáři a formulář pro přidání komentáře.
- * Deleguje práci s daty na PostFacade a CommentFacade.
- */
 final class PostPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(

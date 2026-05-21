@@ -15,16 +15,14 @@ use Nette\Application\UI\Presenter;
  */
 abstract class BasePresenter extends Presenter
 {
-    /** @inject — Nette DI nastaví tuto property automaticky před startup(). */
+    // @inject — Nette DI nastaví tuto property automaticky před startup(). Používáme public, protože Nette DI nemůže nastavit private/protected property.
+     /* Díky @inject nemusíme řešit konstruktor a závislosti v potomcích, které často potřebují jiné služby.
+     */ 
     public NotificationFacade $notificationFacade;
 
     /** @inject */
     public NewsletterFacade $newsletterFacade;
 
-    /**
-     * Spouští se před každým vykreslením šablony.
-     * Nastavuje proměnné dostupné ve všech Latte šablonách přes layout.
-     */
     protected function beforeRender(): void
     {
         parent::beforeRender();
