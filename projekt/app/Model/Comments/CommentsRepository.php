@@ -23,6 +23,19 @@ class CommentsRepository extends BaseRepository
             ->order('created_at ASC');
     }
 
+    // Vrátí komentáře příspěvku i s daty autora v jednom JOIN dotazu — eliminuje N+1 problém ref().
+    public function findByPostIdWithUsers(int $postId): array
+    {
+        return $this->database->query(
+            'SELECT comments.*, users.username AS user_username, users.email AS user_email
+             FROM comments
+             LEFT JOIN users ON users.id = comments.user_id
+             WHERE comments.post_id = ?
+             ORDER BY comments.created_at ASC',
+            $postId
+        )->fetchAll();
+    }
+
     // Aktualizuje komentář, ale pouze pokud je $userId vlastníkem — ochrana před neoprávněnou editací.
     // Vrací true pokud aktualizace proběhla, false pokud uživatel není vlastník nebo komentář neexistuje.
     public function updateIfOwner(int $commentId, int $userId, array $data): bool

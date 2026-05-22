@@ -16,8 +16,9 @@ final class NotificationsPresenter extends \App\Presentation\BasePresenter
     public function renderDefault(): void
     {
         $userId = $this->getUser()->getId();
-        // $this->notificationFacade je zděděno z BasePresenter přes @inject
         $this->notificationFacade->markAllRead($userId);
+        // Zneplatní session cache počtu notifikací — po markAllRead je správná hodnota 0
+        $this->getSession('notif')->remove();
         $this->template->notifications = $this->notificationFacade->getAll($userId);
     }
 

@@ -30,25 +30,23 @@ final class CommentFacade
         $byId = [];
         $roots = [];
 
-        // fetchAll() načte všechna data najednou — Selection lze jinak iterovat jen jednou.
-        $rows = $this->commentsRepository->findByPostId($postId)->fetchAll();
+        // JOIN dotaz načte komentáře i autory najednou — eliminuje N+1 problém oproti ref() v cyklu.
+        $rows = $this->commentsRepository->findByPostIdWithUsers($postId);
 
-        // Průchod 1: vytvoří stdClass uzly indexované podle ID, přiřadí username z relace.
+        // Průchod 1: vytvoří stdClass uzly indexované podle ID.
         foreach ($rows as $comment) {
-            // ref() načte propojený řádek z tabulky 'users' bez dalšího JOIN dotazu.
-            $user = $comment->user_id !== null ? $comment->ref('users', 'user_id') : null;
             $node = (object) [
-                'id' => $comment->id,
-                'content' => $comment->content,
+                'id'         => $comment->id,
+                'content'    => $comment->content,
                 'created_at' => $comment->created_at,
-                'user_id' => $comment->user_id,
-                'post_id' => $comment->post_id,
-                'parent_id' => $comment->parent_id ?? null,
-                // Preferujeme username registrovaného uživatele; jinak zobrazíme guest jméno.
-                'username' => $user?->username ?? $comment->name,
-                'email' => $user !== null ? ($user->email ?? '') : $comment->email,
-                'likes_count' => $comment->likes_count,
-                'children' => [],
+                'user_id'    => $comment->user_id,
+                'post_id'    => $comment->post_id,
+                'parent_id'  => $comment->parent_id ?? null,
+                // user_username pochází z JOIN; pokud NULL (host), použijeme name z formuláře.
+                'username'   => $comment->user_username ?? $comment->name,
+                'email'      => $comment->user_id !== null ? ($comment->user_email ?? '') : $comment->email,
+                'likes_count'=> $comment->likes_count,
+                'children'   => [],
             ];
             $byId[$comment->id] = $node;
         }

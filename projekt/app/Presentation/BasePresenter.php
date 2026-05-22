@@ -25,9 +25,14 @@ abstract class BasePresenter extends Presenter
     {
         parent::beforeRender();
 
-        // Počet nepřečtených notifikací — zobrazuje se jako odznak na ikoně zvonku v navigaci
+        // Počet nepřečtených notifikací — cachován v session (TTL 30 s), aby se DB nedotazovala při každém requestu
         if ($this->getUser()->isLoggedIn()) {
-            $this->template->notifCount = $this->notificationFacade->getUnreadCount($this->getUser()->getId());
+            $notifSession = $this->getSession('notif');
+            if (!isset($notifSession->count) || (time() - ($notifSession->ts ?? 0)) > 30) {
+                $notifSession->count = $this->notificationFacade->getUnreadCount($this->getUser()->getId());
+                $notifSession->ts    = time();
+            }
+            $this->template->notifCount = $notifSession->count;
         } else {
             $this->template->notifCount = 0;
         }

@@ -10,6 +10,9 @@ use Nette\Database\Explorer;
  */
 final class PremiumFacade
 {
+    /** @var array<int, \DateTimeInterface|null> Request-level cache pro premium_until, aby se DB nedotazovala víckrát za request */
+    private array $cache = [];
+
     public function __construct(
         private Explorer $database,
     ) {}
@@ -18,25 +21,27 @@ final class PremiumFacade
      * Zjistí, zda má uživatel aktivní prémiové předplatné.
      * Admin má vždy plný přístup — kontrolu role provádí presenter.
      */
+    private function fetchUntil(int $userId): ?\DateTimeInterface
+    {
+        if (!array_key_exists($userId, $this->cache)) {
+            $user  = $this->database->table('users')->get($userId);
+            $until = $user ? ($user->premium_until ?? null) : null;
+            $this->cache[$userId] = $until instanceof \DateTimeInterface ? $until : null;
+        }
+        return $this->cache[$userId];
+    }
+
     public function isPremium(int $userId): bool
     {
-        $user = $this->database->table('users')->get($userId);
-        if (!$user) {
-            return false;
-        }
-        $until = $user->premium_until ?? null;
-        return $until instanceof \DateTimeInterface && $until > new \DateTimeImmutable();
+        $until = $this->fetchUntil($userId);
+        return $until !== null && $until > new \DateTimeImmutable();
     }
 
     /** Vrátí datum vypršení prémiového účtu, nebo null pokud není premium. */
     public function getPremiumUntil(int $userId): ?\DateTimeInterface
     {
-        $user = $this->database->table('users')->get($userId);
-        $until = $user->premium_until ?? null;
-        if ($until instanceof \DateTimeInterface && $until > new \DateTimeImmutable()) {
-            return $until;
-        }
-        return null;
+        $until = $this->fetchUntil($userId);
+        return ($until !== null && $until > new \DateTimeImmutable()) ? $until : null;
     }
 
     /**
@@ -65,6 +70,7 @@ final class PremiumFacade
             ->where('id', $userId)
             ->update(['premium_until' => $newExpiry]);
 
+        unset($this->cache[$userId]); // Zneplatní cache po změně
         return $newExpiry;
     }
 }

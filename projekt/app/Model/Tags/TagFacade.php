@@ -41,21 +41,35 @@ final class TagFacade
     // Tagy, které ještě neexistují, se automaticky vytvoří s vygenerovaným slugem.
     public function syncPostTags(int $postId, string $tagString): void
     {
-        // Smažeme všechny stávající vazby příspěvku na tagy.
         $this->database->table('post_tags')->where('post_id', $postId)->delete();
 
-        // Rozdělíme text na pole názvů a odstraníme prázdné hodnoty.
-        $names = array_filter(array_map('trim', explode(',', $tagString)));
-        foreach ($names as $name) {
-            $slug = $this->slugify($name);
-            // Pokud tag se slugem existuje, použijeme ho; jinak vytvoříme nový.
-            $tag  = $this->database->table('tags')->where('slug', $slug)->fetch()
-                 ?? $this->database->table('tags')->insert(['name' => $name, 'slug' => $slug]);
-            $this->database->table('post_tags')->insert([
-                'post_id' => $postId,
-                'tag_id'  => $tag->id,
-            ]);
+        $names = array_values(array_filter(array_map('trim', explode(',', $tagString))));
+        if (!$names) {
+            return;
         }
+
+        $slugs = array_map([$this, 'slugify'], $names);
+
+        // Jeden dotaz pro všechny existující tagy najednou
+        $existing = $this->database->table('tags')
+            ->where('slug', $slugs)
+            ->fetchPairs('slug', 'id');
+
+        $tagIds = [];
+        foreach ($names as $i => $name) {
+            $slug = $slugs[$i];
+            if (isset($existing[$slug])) {
+                $tagIds[] = $existing[$slug];
+            } else {
+                $newTag   = $this->database->table('tags')->insert(['name' => $name, 'slug' => $slug]);
+                $tagIds[] = $newTag->id;
+            }
+        }
+
+        // Batch INSERT všech vazeb najednou
+        $this->database->table('post_tags')->insert(
+            array_map(fn($tagId) => ['post_id' => $postId, 'tag_id' => $tagId], $tagIds)
+        );
     }
 
     // Vrátí tagy příspěvku jako čárkami oddělený řetězec — pro předvyplnění formuláře.

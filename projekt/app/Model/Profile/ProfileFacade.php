@@ -28,20 +28,14 @@ final class ProfileFacade
      */
     public function getStats(int $userId): array
     {
-        $commentLikes = (int) $this->database->query(
-            'SELECT COALESCE(SUM(likes_count), 0) FROM comments WHERE user_id = ?', $userId
-        )->fetchField();
-
-        $postLikes = (int) $this->database->query(
-            'SELECT COALESCE(SUM(likes_count), 0) FROM posts WHERE user_id = ?', $userId
-        )->fetchField();
-
-        return [
-            'post_count'              => $this->database->table('posts')->where('user_id', $userId)->count('*'),
-            'comment_count'           => $this->database->table('comments')->where('user_id', $userId)->count('*'),
-            'comment_likes_received'  => $commentLikes,
-            'post_likes_received'     => $postLikes,
-        ];
+        return (array) $this->database->query(
+            'SELECT
+                (SELECT COUNT(*)              FROM posts    WHERE user_id = ?) AS post_count,
+                (SELECT COUNT(*)              FROM comments WHERE user_id = ?) AS comment_count,
+                (SELECT COALESCE(SUM(likes_count),0) FROM posts    WHERE user_id = ?) AS post_likes_received,
+                (SELECT COALESCE(SUM(likes_count),0) FROM comments WHERE user_id = ?) AS comment_likes_received',
+            $userId, $userId, $userId, $userId
+        )->fetch();
     }
 
     /**
