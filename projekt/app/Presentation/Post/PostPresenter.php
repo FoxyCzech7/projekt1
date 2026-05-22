@@ -61,7 +61,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         $userHasLikedComments = [];
         if ($this->getUser()->isLoggedIn()) {
             $userId = $this->getUser()->getId();
-            // Pro post předáváme [$id] — pole s jedním prvkem, aby getUserLikedPostIds
+            // Pro post předáváme [$id] - pole s jedním prvkem, aby getUserLikedPostIds
             // mohlo použít stejnou cestu kódu jako na homepage (kde je jich více).
             $userHasLiked = $this->postFacade->getUserLikedPostIds($userId, [$id]);
             $userHasLikedComments = $this->commentFacade->getUserLikedCommentIds($userId);
@@ -80,7 +80,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         $form = new Form;
         $user = $this->getUser();
 
-        // Přihlášení uživatelé nezadávají jméno ani email — berou se z jejich identity.
+        // Přihlášení uživatelé nezadávají jméno ani email - berou se z jejich identity.
         if ($user->isLoggedIn()) {
             $form->addTextArea('content', 'Komentář:')
                 ->setRequired('Zadejte prosím obsah komentáře.')
@@ -201,9 +201,9 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         }
     }
 
-    /**
-     * Zkontroluje oprávnění přes Authorizator (RBAC).
-     * Iterujeme přes role, protože uživatel jich může mít víc.
+    /*
+      Zkontroluje oprávnění přes Authorizator (RBAC).
+      Iterujeme přes role, protože uživatel jich může mít víc.
      */
     private function isAllowed(string $resource, string $privilege): bool
     {

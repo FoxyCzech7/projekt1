@@ -2,13 +2,13 @@
 
 namespace App\Presentation\Newsletter;
 
-/**
- * Spravuje přihlášení a odhlášení odběru newsletteru.
- * Nevyžaduje vlastní šablonu — každá akce přesměruje zpět na Home.
- *
- * Stav odběru se ukládá do session sekce 'newsletter' (klíč 'email'),
- * aby BasePresenter mohl zobrazit správný stav v patičce bez DB dotazu.
- * Přihlášení k odběru je povoleno pouze pro přihlášené uživatele.
+/*
+  Spravuje přihlášení a odhlášení odběru newsletteru.
+  Nevyžaduje vlastní šablonu — každá akce přesměruje zpět na Home.
+ 
+  Stav odběru se ukládá do session sekce 'newsletter' (klíč 'email'),
+  aby BasePresenter mohl zobrazit správný stav v patičce bez DB dotazu.
+  Přihlášení k odběru je povoleno pouze pro přihlášené uživatele.
  */
 final class NewsletterPresenter extends \App\Presentation\BasePresenter
 {
@@ -18,13 +18,13 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->setLayout('layout');
     }
 
-    /**
-     * Zpracuje formulář z patičky (plain HTML POST, ne Nette Form).
-     * Validuje email, přihlásí k odběru a uloží do session.
+    /*
+      Zpracuje formulář z patičky (plain HTML POST, ne Nette Form).
+      Validuje email, přihlásí k odběru a uloží do session.
      */
     public function actionSubscribe(): void
     {
-        // Newsletter je jen pro přihlášené uživatele — nepřihlášeného přesměrujeme na login
+        // Newsletter je jen pro přihlášené uživatele - nepřihlášeného přesměrujeme na login
         if (!$this->getUser()->isLoggedIn()) {
             $this->redirect('Sign:in');
         }
@@ -38,7 +38,7 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
 
         try {
             $this->newsletterFacade->subscribe($email);
-            // Uloží email do session → BasePresenter zobrazí "Aktivní odběr" v patičce
+            // Uloží email do session -> BasePresenter zobrazí "Aktivní odběr" v patičce
             $this->getSession('newsletter')->email = $email;
             $this->flashMessage('Přihlášení k odběru bylo úspěšné.', 'success');
         } catch (\RuntimeException $e) {
@@ -48,9 +48,9 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    /**
-     * Změní email odběru: odhlásí starý (ze session) a přihlásí nový.
-     * Pokud v session není starý email, rovnou přihlásí nový.
+    /*
+      Změní email odběru: odhlásí starý (ze session) a přihlásí nový.
+      Pokud v session není starý email, rovnou přihlásí nový.
      */
     public function actionChange(): void
     {
@@ -79,9 +79,9 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    /**
-     * Odhlásí email z odběru a vymaže ho ze session.
-     * Email přichází jako URL parametr (z odkazu v patičce nebo z emailu).
+    /*
+      Odhlásí email z odběru a vymaže ho ze session.
+      Email přichází jako URL parametr (z odkazu v patičce nebo z emailu).
      */
     public function actionUnsubscribe(string $email): void
     {
@@ -97,9 +97,9 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    /**
-     * Admin akce — odešle newsletter o konkrétním příspěvku všem odběratelům.
-     * Dostupná pouze pro adminy.
+    /*
+      Admin akce — odešle newsletter o konkrétním příspěvku všem odběratelům.
+      Dostupná pouze pro adminy.
      */
     public function actionSend(int $postId): void
     {
