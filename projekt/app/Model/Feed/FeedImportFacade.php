@@ -6,12 +6,9 @@ use App\Model\PostFacade;
 use Nette\Caching\Cache;
 use Nette\Caching\Storage;
 
-/**
- * Stahuje RSS feed, parsuje ho pomocí SimpleXML a vytváří z něj příspěvky.
- *
- * Data feedu jsou cachována (výchozí 1 hodina), aby se každý klik admina
- * na "importovat" nevybíjel na síť.
- */
+// Stahuje RSS feed, parsuje ho pomoci SimpleXML a vytvari z nej prispevky.
+// Data feedu jsou cachovana (vychozi 1 hodina), aby se kazdy klik admina
+// na "importovat" nevybijel na sit.
 final class FeedImportFacade
 {
     private const FEED_URL = 'https://ancientheroes.net/blog';
@@ -24,33 +21,27 @@ final class FeedImportFacade
         private PostFacade $postFacade,
         Storage $cacheStorage,
     ) {
-        // Namespace 'feed.import' izoluje klíče od ostatních cache záznamů aplikace.
+        // namespace 'feed.import' izoluje klice od ostatnich cache zaznamu aplikace
         $this->cache = new Cache($cacheStorage, 'feed.import');
     }
 
-    /**
-     * Vrátí nejaktuálnější položku z feedu (z cache nebo sítě).
-     * Vrátí null pokud feed není dostupný nebo neobsahuje žádné položky.
-     */
+    // Vrati nejaktuálnejsi polozku z feedu (z cache nebo site).
+    // Vrati null pokud feed neni dostupny nebo neobsahuje zadne polozky.
     public function getLatestFeedItem(): ?array
     {
-        // Cache::load uloží výsledek jen pokud callback nehodí výjimku.
-        // Při síťové chybě výjimka probublá a cache zůstane prázdná.
+        // Cache::load ulozi vysledek jen pokud callback nehodí vyjimku.
+        // Pri sitove chybe vyjimka probubla a cache zustane prazdna.
         return $this->cache->load(self::CACHE_KEY, function (&$deps): ?array {
             $deps[Cache::Expire] = self::CACHE_EXPIRE;
             return $this->fetchLatestItem();
         });
     }
 
-    /**
-     * Importuje nejnovější položku feedu jako nový příspěvek.
-     *
-     * Návratové hodnoty:
-     *   'created'   — příspěvek byl úspěšně vytvořen
-     *   'duplicate' — příspěvek se stejným názvem již existuje
-     *
-     * @throws \RuntimeException pokud feed není dostupný
-     */
+    // Importuje nejnovejsi polozku feedu jako novy prispevek.
+    // Navratove hodnoty:
+    //   'created'   - prispevek byl uspesne vytvoren
+    //   'duplicate' - prispevek se stejnym nazvem uz existuje
+    // Hazi RuntimeException pokud feed neni dostupny.
     public function importLatestPost(int $authorUserId, string $uploadsDir): string
     {
         $item = $this->getLatestFeedItem();
@@ -62,7 +53,7 @@ final class FeedImportFacade
             return 'duplicate';
         }
 
-        // Příspěvek vytvoříme nejdřív bez obrázku — potřebujeme jeho ID pro název souboru.
+        // prispevek vytvorime nejdriv bez obrazku - potrebujeme jeho ID pro nazev souboru
         $post = $this->postFacade->createPost($item['title'], $item['content'], $authorUserId);
 
         $imagePath = null;
@@ -74,32 +65,28 @@ final class FeedImportFacade
             $this->postFacade->updatePost($post->id, $post->title, $post->content, $imagePath);
         }
 
-        // Po importu vymažeme cache — příští klik admina načte nová data z feedu.
+        // po importu vymaze cache - pristi klik admina nacte nova data z feedu
         $this->cache->remove(self::CACHE_KEY);
 
         return 'created';
     }
-
-    // ─────────────────────────────────────────────
-    // Privátní pomocné metody
-    // ─────────────────────────────────────────────
 
     private function fetchLatestItem(): ?array
     {
         $raw = $this->httpGet(self::FEED_URL);
 
         if (!$this->looksLikeHtml($raw)) {
-            // Přímá RSS/XML URL
+            // prima RSS/XML URL
             return $this->parseRss($raw, self::FEED_URL);
         }
 
-        // HTML stránka — zkusíme RSS autodiscovery, pak scraping
+        // HTML stranka - zkusime RSS autodiscovery, pak scraping
         try {
             $feedUrl = $this->discoverFeedUrl($raw, self::FEED_URL);
             $feedRaw = $this->httpGet($feedUrl);
             return $this->parseRss($feedRaw, $feedUrl);
         } catch (\RuntimeException) {
-            // RSS nenalezeno — padneme na HTML scraping
+            // RSS nenalezeno - padneme na HTML scraping
             return $this->scrapeHtmlListing($raw, self::FEED_URL);
         }
     }
@@ -111,7 +98,7 @@ final class FeedImportFacade
         libxml_clear_errors();
 
         if (!$xml || !isset($xml->channel->item)) {
-            throw new \RuntimeException("URL {$sourceUrl} není platný RSS XML dokument.");
+            throw new \RuntimeException("URL {$sourceUrl} neni platny RSS XML dokument.");
         }
 
         $latestItem = null;
@@ -126,7 +113,7 @@ final class FeedImportFacade
         }
 
         if ($latestItem === null) {
-            throw new \RuntimeException('RSS feed neobsahuje žádné položky.');
+            throw new \RuntimeException('RSS feed neobsahuje zadne polozky.');
         }
 
         return [
@@ -137,10 +124,8 @@ final class FeedImportFacade
         ];
     }
 
-    /**
-     * Scraping HTML stránky — použije se když RSS feed neexistuje.
-     * Najde první článek na listingové stránce, pak stáhne jeho plný obsah.
-     */
+    // Scraping HTML stranky - pouzije se kdyz RSS feed neexistuje.
+    // Najde prvni clanek na listingove strance, pak stahne jeho plny obsah.
     private function scrapeHtmlListing(string $html, string $baseUrl): array
     {
         $parsed = parse_url($baseUrl);
@@ -153,7 +138,7 @@ final class FeedImportFacade
 
         $xpath = new \DOMXPath($doc);
 
-        // Hledáme první článek — zkoušíme běžné vzory v pořadí od nejspecifičtějšího
+        // hledame prvni clanek - zkousime bezne vzory v poradi od nejspecificejsiho
         $articleNode = null;
         foreach (['//article[1]', '(//div[contains(@class,"post")])[1]', '(//div[contains(@class,"card")])[1]', '(//div[contains(@class,"entry")])[1]'] as $q) {
             $nodes = $xpath->query($q);
@@ -164,35 +149,35 @@ final class FeedImportFacade
         }
 
         if ($articleNode === null) {
-            throw new \RuntimeException('Na stránce nebyl nalezen žádný článek (ani RSS feed). Zadejte přímou URL RSS feedu.');
+            throw new \RuntimeException('Na strance nebyl nalezen zadny clanek (ani RSS feed). Zadejte primou URL RSS feedu.');
         }
 
-        // Nadpis
+        // nadpis
         $titleNode = $xpath->query('.//*[self::h1 or self::h2 or self::h3][1]', $articleNode)->item(0);
         $title = $titleNode ? trim($titleNode->textContent) : null;
         if (!$title) {
-            throw new \RuntimeException('Článek nalezen, ale nepodařilo se extrahovat nadpis.');
+            throw new \RuntimeException('Clanek nalezen, ale nepodarilo se extrahovat nadpis.');
         }
 
-        // Odkaz na plný článek
+        // odkaz na plny clanek
         $linkNode = $xpath->query('.//a[@href][1]', $articleNode)->item(0);
         $link = $linkNode ? $linkNode->getAttribute('href') : null;
         if ($link && !str_starts_with($link, 'http')) {
             $link = $origin . '/' . ltrim($link, '/');
         }
 
-        // Obrázek z listingu
+        // obrazek z listingu
         $imgNode = $xpath->query('.//img[@src][1]', $articleNode)->item(0);
         $imageUrl = $imgNode ? $imgNode->getAttribute('src') : null;
         if ($imageUrl && !str_starts_with($imageUrl, 'http')) {
             $imageUrl = $origin . '/' . ltrim($imageUrl, '/');
         }
 
-        // Excerpt z listingu jako výchozí obsah
+        // excerpt z listingu jako vychozi obsah
         $descNode = $xpath->query('.//p[1]', $articleNode)->item(0);
         $content = $descNode ? trim($descNode->textContent) : '';
 
-        // Stáhneme plný článek pro lepší obsah a případně kvalitnější obrázek
+        // stáhneme plny clanek pro lepsi obsah a pripadne kvalitnejsi obrazek
         if ($link) {
             try {
                 $articleHtml = $this->httpGet($link);
@@ -200,12 +185,12 @@ final class FeedImportFacade
                 if ($fullContent !== '') {
                     $content = $fullContent;
                 }
-                // Obrázek z článku bývá kvalitnější než thumbnail z listingu
+                // obrazek z clanku byva kvalitnejsi nez thumbnail z listingu
                 if ($imageUrl === null) {
                     $imageUrl = $this->scrapeArticleImage($articleHtml, $origin);
                 }
             } catch (\RuntimeException) {
-                // Nepodařilo se stáhnout článek — použijeme excerpt
+                // nepodarilo se stahnout clanek - pouzijeme excerpt
             }
         }
 
@@ -217,7 +202,7 @@ final class FeedImportFacade
         ];
     }
 
-    /** Vytáhne hlavní textový obsah článku. */
+    // vytahne hlavni textovy obsah clanku
     private function scrapeArticleContent(string $html): string
     {
         libxml_use_internal_errors(true);
@@ -241,7 +226,7 @@ final class FeedImportFacade
         return '';
     }
 
-    /** Vytáhne první výrazný obrázek z článku (ignoruje malé ikony). */
+    // vytahne prvni vyznamny obrazek z clanku (ignoruje male ikony)
     private function scrapeArticleImage(string $html, string $origin): ?string
     {
         libxml_use_internal_errors(true);
@@ -254,7 +239,7 @@ final class FeedImportFacade
 
         foreach ($imgs as $img) {
             $src = $img->getAttribute('src');
-            // Přeskočíme obrázky označené jako malé (tracking pixely, ikony)
+            // preskocime obrazky oznacene jako male (tracking pixely, ikony)
             $w = (int) $img->getAttribute('width');
             $h = (int) $img->getAttribute('height');
             if (($w > 0 && $w < 100) || ($h > 0 && $h < 100)) {
@@ -273,27 +258,22 @@ final class FeedImportFacade
         return html_entity_decode(trim($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
-    /**
-     * Zjistí, zda odpověď vypadá jako HTML (a ne XML/RSS).
-     */
+    // zjisti, zda odpoved vypada jako HTML (a ne XML/RSS)
     private function looksLikeHtml(string $content): bool
     {
         $start = strtolower(substr(ltrim($content), 0, 100));
         return str_contains($start, '<html') || str_contains($start, '<!doctype');
     }
 
-    /**
-     * RSS autodiscovery — nejprve hledá <link rel="alternate" type="application/rss+xml">
-     * v HTML, pak zkouší běžné feed cesty (WordPress, Ghost, Jekyll...).
-     *
-     * @throws \RuntimeException pokud žádná z cest nefunguje
-     */
+    // RSS autodiscovery - nejprve hleda <link rel="alternate" type="application/rss+xml">
+    // v HTML, pak zkusi bezne feed cesty (WordPress, Ghost, Jekyll...).
+    // Hazi RuntimeException pokud zadna z cest nefunguje.
     private function discoverFeedUrl(string $html, string $baseUrl): string
     {
         $parsed = parse_url($baseUrl);
         $origin = $parsed['scheme'] . '://' . $parsed['host'];
 
-        // 1. Hledáme <link> tag v HTML
+        // hledame <link> tag v HTML
         $pattern = '/<link[^>]+type=["\']application\/(rss|atom)\+xml["\'][^>]*>/i';
         if (preg_match_all($pattern, $html, $matches)) {
             foreach ($matches[0] as $tag) {
@@ -307,12 +287,12 @@ final class FeedImportFacade
             }
         }
 
-        // 2. Fallback — zkoušíme feed cesty.
-        // Jako první zkusíme baseUrl + feed/ (WordPress archivní feed),
-        // pak běžné kořenové cesty.
+        // fallback - zkousime feed cesty.
+        // jako prvni zkusime baseUrl + feed/ (WordPress archivni feed),
+        // pak bezne kořenové cesty.
         $basePath = rtrim($parsed['path'] ?? '', '/');
         $candidates = [
-            $origin . $basePath . '/feed/',      // /stories/feed/ — WordPress archivní feed
+            $origin . $basePath . '/feed/',
             $origin . $basePath . '/feed/rss/',
             $origin . '/feed/',
             $origin . '/rss.xml',
@@ -326,22 +306,20 @@ final class FeedImportFacade
             try {
                 $content = $this->httpGet($url);
                 if (!$this->looksLikeHtml($content)) {
-                    return $url; // dostali jsme XML — použijeme tuto cestu
+                    return $url; // dostali jsme XML - pouzijeme tuto cestu
                 }
             } catch (\RuntimeException) {
-                // Tato cesta nefunguje, zkusíme další
+                // tato cesta nefunguje, zkusime dalsi
             }
         }
 
         throw new \RuntimeException(
-            "Na {$origin} nebyl nalezen RSS feed. Zkuste zadat přímou URL feedu."
+            "Na {$origin} nebyl nalezen RSS feed. Zkuste zadat primou URL feedu."
         );
     }
 
-    /**
-     * Stáhne URL přes cURL (preferováno) nebo file_get_contents jako fallback.
-     * Hází RuntimeException s konkrétním důvodem selhání.
-     */
+    // stahne URL pres cURL (preferovano) nebo file_get_contents jako fallback.
+    // hazi RuntimeException s konkretnim duvodem selhani.
     private function httpGet(string $url): string
     {
         if (function_exists('curl_init')) {
@@ -351,8 +329,7 @@ final class FeedImportFacade
                 CURLOPT_TIMEOUT        => 15,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_MAXREDIRS      => 5,
-                // Vypnout SSL verifikaci jen v případě selhání lze zvážit,
-                // ale defaultně ověřujeme — bezpečnější.
+                // defaultne overujeme SSL - bezpecnejsi
                 CURLOPT_SSL_VERIFYPEER => true,
                 CURLOPT_USERAGENT      => 'Mozilla/5.0 (compatible; Blog RSS importer)',
                 CURLOPT_HTTPHEADER     => ['Accept: application/rss+xml, application/xml, text/xml'],
@@ -368,46 +345,42 @@ final class FeedImportFacade
                 throw new \RuntimeException("cURL chyba ({$errno}): {$errmsg}");
             }
             if ($status !== 200) {
-                throw new \RuntimeException("Server vrátil HTTP {$status}.");
+                throw new \RuntimeException("Server vratil HTTP {$status}.");
             }
             if ($raw === false || $raw === '') {
-                throw new \RuntimeException('Server vrátil prázdnou odpověď.');
+                throw new \RuntimeException('Server vratil prazdnou odpoved.');
             }
 
             return $raw;
         }
 
-        // Fallback: file_get_contents (vyžaduje allow_url_fopen = On)
+        // fallback: file_get_contents (vyzaduje allow_url_fopen = On)
         $context = stream_context_create(['http' => [
             'timeout'    => 15,
             'user_agent' => 'Mozilla/5.0 (compatible; Blog RSS importer)',
         ]]);
         $raw = @file_get_contents($url, false, $context);
         if ($raw === false || $raw === '') {
-            throw new \RuntimeException('file_get_contents selhalo. Zkontrolujte allow_url_fopen a síťové připojení kontejneru.');
+            throw new \RuntimeException('file_get_contents selhalo. Zkontrolujte allow_url_fopen a sitove pripojeni kontejneru.');
         }
 
         return $raw;
     }
 
-    /**
-     * Odstraní HTML tagy z description a dekóduje entity.
-     * WordPress description bývá buď čistý text, nebo HTML snippet.
-     */
+    // odstrani HTML tagy z description a dekoduje entity.
+    // WordPress description byva bud cisty text, nebo HTML snippet.
     private function cleanDescription(string $html): string
     {
         return trim(html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 
-    /**
-     * Zkusí získat URL obrázku z položky feedu — tři strategie v pořadí priority:
-     *   1. <media:content> (Media RSS namespace, nejčastěji WordPress)
-     *   2. <enclosure> (standardní RSS příloha)
-     *   3. První <img> v HTML description (fallback)
-     */
+    // zkusi ziskat URL obrazku z polozky feedu - tri strategie v poradi priority:
+    //   1. <media:content> (Media RSS namespace, nejcasteji WordPress)
+    //   2. <enclosure> (standardni RSS priloha)
+    //   3. prvni <img> v HTML description (fallback)
     private function extractImageUrl(\SimpleXMLElement $item): ?string
     {
-        // Strategie 1: media:content (Yahoo Media RSS namespace)
+        // strategie 1: media:content (Yahoo Media RSS namespace)
         $media = $item->children('http://search.yahoo.com/mrss/');
         if (isset($media->content)) {
             $url = (string) ($media->content->attributes()['url'] ?? '');
@@ -416,7 +389,7 @@ final class FeedImportFacade
             }
         }
 
-        // Strategie 2: <enclosure url="..." type="image/...">
+        // strategie 2: <enclosure url="..." type="image/...">
         $enc = $item->enclosure;
         if ($enc) {
             $attrs = $enc->attributes();
@@ -427,7 +400,7 @@ final class FeedImportFacade
             }
         }
 
-        // Strategie 3: první <img src="..."> v description
+        // strategie 3: prvni <img src="..."> v description
         $desc = (string) $item->description;
         if (preg_match('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $desc, $m)) {
             return $m[1];
@@ -436,11 +409,9 @@ final class FeedImportFacade
         return null;
     }
 
-    /**
-     * Stáhne obrázek z URL a uloží ho do uploadsDir.
-     * Timeout 10 s — nechceme, aby admin čekal na zaseknuté spojení.
-     * Vrátí relativní cestu (img/posts/feed-{id}.ext) nebo null při chybě.
-     */
+    // stahne obrazek z URL a ulozi ho do uploadsDir.
+    // timeout 10 s - nechceme, aby admin cekal na zasekle spojeni.
+    // vrati relativni cestu (img/posts/feed-{id}.ext) nebo null pri chybe.
     private function downloadImage(string $url, string $uploadsDir, int $postId): ?string
     {
         $context = stream_context_create(['http' => ['timeout' => 10]]);

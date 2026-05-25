@@ -5,26 +5,26 @@ namespace App\Model\Tags;
 use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 
-// Fasáda pro správu tagů a jejich vazeb na příspěvky.
-// Pracuje přímo s Explorer (bez repository vrstvy), protože operace zahrnují
-// cross-table JOIN dotazy a není třeba izolace specifická pro repository.
+// Fasada pro spravu tagu a jejich vazeb na prispevky.
+// Pracuje primo s Explorer (bez repository vrstvy), protoze operace zahrnuji
+// cross-table JOIN dotazy a neni treba izolace specificka pro repository.
 final class TagFacade
 {
     public function __construct(private Explorer $database) {}
 
-    // Vrátí všechny tagy seřazené abecedně — pro zobrazení v navigaci nebo výběru.
+    // Vrati vsechny tagy serazene abecedne - pro zobrazeni v navigaci nebo vyberu.
     public function getAllTags(): array
     {
         return $this->database->table('tags')->order('name ASC')->fetchAll();
     }
 
-    // Najde tag podle URL slug — používá se při filtrování příspěvků podle tagu.
+    // Najde tag podle URL slug - pouziva se pri filtrovani prispevku podle tagu.
     public function findBySlug(string $slug): ?ActiveRow
     {
         return $this->database->table('tags')->where('slug', $slug)->fetch();
     }
 
-    // Vrátí tagy přiřazené k danému příspěvku přes JOIN tabulku post_tags.
+    // Vrati tagy prirazene k danemu prispevku pres JOIN tabulku post_tags.
     public function getPostTags(int $postId): array
     {
         return $this->database->query(
@@ -36,9 +36,9 @@ final class TagFacade
         )->fetchAll();
     }
 
-    // Synchronizuje tagy příspěvku z čárkami odděleného textu (např. "tanky, drony, letectvo").
-    // Nejprve smaže všechny stávající vazby, pak vytvoří nové — jednoduchá ale atomická operace.
-    // Tagy, které ještě neexistují, se automaticky vytvoří s vygenerovaným slugem.
+    // Synchronizuje tagy prispevku z carkami oddelenych textu (napr. "tanky, drony, letectvo").
+    // Nejprve smaze vsechny stavajici vazby, pak vytvori nove - jednoducha ale atomicka operace.
+    // Tagy, ktere jeste neexistuji, se automaticky vytvoří s vygenerovanym slugem.
     public function syncPostTags(int $postId, string $tagString): void
     {
         $this->database->table('post_tags')->where('post_id', $postId)->delete();
@@ -50,7 +50,7 @@ final class TagFacade
 
         $slugs = array_map([$this, 'slugify'], $names);
 
-        // Jeden dotaz pro všechny existující tagy najednou
+        // jeden dotaz pro vsechny existujici tagy najednou
         $existing = $this->database->table('tags')
             ->where('slug', $slugs)
             ->fetchPairs('slug', 'id');
@@ -66,20 +66,20 @@ final class TagFacade
             }
         }
 
-        // Batch INSERT všech vazeb najednou
+        // batch INSERT vsech vazeb najednou
         $this->database->table('post_tags')->insert(
             array_map(fn($tagId) => ['post_id' => $postId, 'tag_id' => $tagId], $tagIds)
         );
     }
 
-    // Vrátí tagy příspěvku jako čárkami oddělený řetězec — pro předvyplnění formuláře.
+    // Vrati tagy prispevku jako carkami oddeleny retezec - pro predvyplneni formulare.
     public function getPostTagString(int $postId): string
     {
         $tags = $this->getPostTags($postId);
         return implode(', ', array_map(fn($t) => $t->name, $tags));
     }
 
-    // Vrátí všechny publikované příspěvky s daným tagem přes SQL JOIN — pro stránku tagu.
+    // Vrati vsechny publikovane prispevky s danym tagem pres SQL JOIN - pro stranku tagu.
     public function getPostsByTag(string $slug): array
     {
         return $this->database->query(
@@ -96,13 +96,13 @@ final class TagFacade
         )->fetchAll();
     }
 
-    // Převede text na URL-safe slug: odstraní diakritiku, malá písmena, pomlčky místo mezer.
-    // iconv TRANSLIT transliteruje znaky (č→c, ř→r), IGNORE přeskočí nepřeložitelné.
+    // Prevede text na URL-safe slug: odstrani diakritiku, mala pismena, pomlcky misto mezer.
+    // iconv TRANSLIT transliteruje znaky (c→c, r→r), IGNORE preskoci neprelozitelne.
     private function slugify(string $text): string
     {
         $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
         $text = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $text));
-        // trim('-') odstraní přebytečné pomlčky na začátku a konci.
+        // trim('-') odstrani prebytecne pomlcky na zacatku a konci
         return trim($text, '-');
     }
 }

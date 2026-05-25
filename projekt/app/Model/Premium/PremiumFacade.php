@@ -4,23 +4,17 @@ namespace App\Model\Premium;
 
 use Nette\Database\Explorer;
 
-/**
- * Správa prémiového předplatného uživatelů.
- * Vyžaduje sloupec premium_until DATETIME NULL v tabulce users.
- */
+// Sprava premioveho predplatneho uzivatelu.
+// Vyzaduje sloupec premium_until DATETIME NULL v tabulce users.
 final class PremiumFacade
 {
-    /** @var array<int, \DateTimeInterface|null> Request-level cache pro premium_until, aby se DB nedotazovala víckrát za request */
+    // request-level cache pro premium_until, aby se DB nedotazovala vicekrat za request
     private array $cache = [];
 
     public function __construct(
         private Explorer $database,
     ) {}
 
-    /**
-     * Zjistí, zda má uživatel aktivní prémiové předplatné.
-     * Admin má vždy plný přístup — kontrolu role provádí presenter.
-     */
     private function fetchUntil(int $userId): ?\DateTimeInterface
     {
         if (!array_key_exists($userId, $this->cache)) {
@@ -31,27 +25,25 @@ final class PremiumFacade
         return $this->cache[$userId];
     }
 
+    // Zjisti, zda ma uzivatel aktivni premiove predplatne.
+    // Admin ma vzdy plny pristup - kontrolu role provadi presenter.
     public function isPremium(int $userId): bool
     {
         $until = $this->fetchUntil($userId);
         return $until !== null && $until > new \DateTimeImmutable();
     }
 
-    /** Vrátí datum vypršení prémiového účtu, nebo null pokud není premium. */
+    // Vrati datum vyprseni premioveho uctu, nebo null pokud neni premium.
     public function getPremiumUntil(int $userId): ?\DateTimeInterface
     {
         $until = $this->fetchUntil($userId);
         return ($until !== null && $until > new \DateTimeImmutable()) ? $until : null;
     }
 
-    /**
-     * Aktivuje nebo prodlouží prémiové předplatné.
-     *
-     * Pokud uživatel má ještě aktivní premium, prodloužení začíná od konce
-     * stávajícího období (neztrácí zaplacený čas). Jinak začíná od teď.
-     *
-     * @return \DateTimeImmutable Nové datum vypršení.
-     */
+    // Aktivuje nebo prodlouzi premiove predplatne.
+    // Pokud uzivatel ma jeste aktivni premium, prodlouzeni zacina od konce
+    // stavajiciho obdobi (neztrati zaplaceny cas). Jinak zacina od ted.
+    // Vrati nove datum vyprseni.
     public function activatePremium(int $userId, int $months): \DateTimeImmutable
     {
         $user = $this->database->table('users')->get($userId);
@@ -70,7 +62,7 @@ final class PremiumFacade
             ->where('id', $userId)
             ->update(['premium_until' => $newExpiry]);
 
-        unset($this->cache[$userId]); // Zneplatní cache po změně
+        unset($this->cache[$userId]); // zneplatni cache po zmene
         return $newExpiry;
     }
 }

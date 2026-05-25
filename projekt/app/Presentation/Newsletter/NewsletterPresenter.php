@@ -2,14 +2,11 @@
 
 namespace App\Presentation\Newsletter;
 
-/*
-  Spravuje přihlášení a odhlášení odběru newsletteru.
-  Nevyžaduje vlastní šablonu — každá akce přesměruje zpět na Home.
- 
-  Stav odběru se ukládá do session sekce 'newsletter' (klíč 'email'),
-  aby BasePresenter mohl zobrazit správný stav v patičce bez DB dotazu.
-  Přihlášení k odběru je povoleno pouze pro přihlášené uživatele.
- */
+// Spravuje prihlaseni a odhlaseni odberu newsletteru.
+// Nema vlastni sablonu - kazda akce presmeruje zpet na Home.
+// Stav odberu se uklada do session sekce 'newsletter' (klic 'email'),
+// aby BasePresenter mohl zobrazit spravny stav v paticce bez DB dotazu.
+// Prihlaseni k odberu je povoleno pouze pro prihlasene uzivatele.
 final class NewsletterPresenter extends \App\Presentation\BasePresenter
 {
     protected function startup(): void
@@ -18,13 +15,11 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->setLayout('layout');
     }
 
-    /*
-      Zpracuje formulář z patičky (plain HTML POST, ne Nette Form).
-      Validuje email, přihlásí k odběru a uloží do session.
-     */
+    // Zpracuje formular z paticce (plain HTML POST, ne Nette Form).
+    // Validuje email, prihlas k odberu a ulozi do session.
     public function actionSubscribe(): void
     {
-        // Newsletter je jen pro přihlášené uživatele - nepřihlášeného přesměrujeme na login
+        // newsletter je jen pro prihlasene uzivatele - neprihlaseneho presmerujeme na login
         if (!$this->getUser()->isLoggedIn()) {
             $this->redirect('Sign:in');
         }
@@ -38,7 +33,7 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
 
         try {
             $this->newsletterFacade->subscribe($email);
-            // Uloží email do session -> BasePresenter zobrazí "Aktivní odběr" v patičce
+            // ulozi email do session → BasePresenter zobrazi "Aktivni odber" v paticce
             $this->getSession('newsletter')->email = $email;
             $this->flashMessage('Přihlášení k odběru bylo úspěšné.', 'success');
         } catch (\RuntimeException $e) {
@@ -48,10 +43,8 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    /*
-      Změní email odběru: odhlásí starý (ze session) a přihlásí nový.
-      Pokud v session není starý email, rovnou přihlásí nový.
-     */
+    // Zmeni email odberu: odhlas stary (ze session) a prihlas novy.
+    // Pokud v session neni stary email, rovnou prihlas novy.
     public function actionChange(): void
     {
         $newEmail = trim($this->getHttpRequest()->getPost('email', ''));
@@ -63,7 +56,7 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
             $this->redirect('Home:default');
         }
 
-        // Odhlásí původní email, aby nebyl duplicitní záznam v DB
+        // odhlas puvodni email, aby nebyl duplicitni zaznam v DB
         if ($oldEmail !== '') {
             $this->newsletterFacade->unsubscribe($oldEmail);
         }
@@ -79,15 +72,13 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    /*
-      Odhlásí email z odběru a vymaže ho ze session.
-      Email přichází jako URL parametr (z odkazu v patičce nebo z emailu).
-     */
+    // Odhlas email z odberu a vymaze ho ze session.
+    // Email prichazi jako URL parametr (z odkazu v paticce nebo z emailu).
     public function actionUnsubscribe(string $email): void
     {
         $this->newsletterFacade->unsubscribe($email);
 
-        // Vymažeme ze session jen pokud odpovídá aktuálně uloženému emailu
+        // vymaze ze session jen pokud odpovida aktualne ulozenemu emailu
         $session = $this->getSession('newsletter');
         if (($session->email ?? '') === $email) {
             unset($session->email);
@@ -97,17 +88,15 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    /*
-      Admin akce — odešle newsletter o konkrétním příspěvku všem odběratelům.
-      Dostupná pouze pro adminy.
-     */
+    // Admin akce - odesle newsletter o konkretnim prispevku vsem odberatelum.
+    // Dostupna pouze pro adminy.
     public function actionSend(int $postId): void
     {
         if (!$this->getUser()->isInRole('admin')) {
             $this->error('Přístup zamítnut.', 403);
         }
 
-        // baseUrl se předá do newsletteru pro sestavení odkazu na článek
+        // baseUrl se preda do newsletteru pro sestaveni odkazu na clanek
         $baseUrl = $this->getHttpRequest()->getUrl()->getBaseUrl();
         $sent = $this->newsletterFacade->sendNewPost($postId, rtrim($baseUrl, '/'));
         $this->flashMessage("Newsletter odeslán {$sent} odběratelům.", 'success');

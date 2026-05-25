@@ -6,9 +6,7 @@ use App\Model\Premium\CartFacade;
 use App\Model\Premium\PremiumFacade;
 use Nette\Application\UI\Presenter;
 
-/**
- * Správa prémiového předplatného — výběr plánu, košík, platba, potvrzení.
- */
+// Sprava premioveho predplatneho - vyber planu, kosik, platba, potvrzeni.
 final class PremiumPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -22,13 +20,13 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         $this->setLayout('layout');
     }
 
-    /** Přehled dostupných plánů předplatného. */
+    // Prehled dostupnych planu predplatneho.
     public function renderPlans(): void
     {
         $this->template->plans = $this->cartFacade->getPlans();
         $this->template->currentCart = $this->cartFacade->getCart();
 
-        // Pokud je uživatel již premium, zobrazíme kdy mu vyprší.
+        // pokud je uzivatel uz premium, zobrazime kdy mu vyprsí
         $premiumUntil = null;
         if ($this->getUser()->isLoggedIn()) {
             $premiumUntil = $this->premiumFacade->getPremiumUntil($this->getUser()->getId());
@@ -36,7 +34,7 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         $this->template->premiumUntil = $premiumUntil;
     }
 
-    /** Přidá plán do košíku a přesměruje na košík. */
+    // Prida plan do kosiku a presmeruje na kosik.
     public function actionAddToCart(int $planId): void
     {
         $plan = $this->cartFacade->getPlanById($planId);
@@ -47,23 +45,21 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Premium:cart');
     }
 
-    /** Obsah košíku. */
+    // Obsah kosiku.
     public function renderCart(): void
     {
         $this->template->cart = $this->cartFacade->getCart();
     }
 
-    /** Odebere položku z košíku a vrátí na výběr plánů. */
+    // Odebere polozku z kosiku a vrati na vyber planu.
     public function actionRemoveFromCart(): void
     {
         $this->cartFacade->clearCart();
         $this->redirect('Premium:plans');
     }
 
-    /**
-     * Přechod k platební bráně.
-     * Vyžaduje přihlášeného uživatele a neprázdný košík.
-     */
+    // Prechod k platebni brane.
+    // Vyzaduje prihlaseneho uzivatele a neprazdny kosik.
     public function actionCheckout(): void
     {
         if (!$this->getUser()->isLoggedIn()) {
@@ -77,27 +73,21 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Premium:gateway');
     }
 
-    /**
-     * Simulace platební brány — zobrazí loading stránku a automaticky
-     * přesměruje na děkovací stránku (simulace okamžitého schválení platby).
-     */
+    // Simulace platebni brany - zobrazi loading stranku a automaticky
+    // presmeruje na dekovaci stranku (simulace okamziteho schvaleni platby).
     public function renderGateway(): void
     {
         if ($this->cartFacade->isEmpty()) {
             $this->redirect('Premium:plans');
         }
         $this->template->cart = $this->cartFacade->getCart();
-        // json_encode zajistí správné escapování pro JS string literal —
-        // Latte 3 filtr |json neexistuje, proto serializujeme v PHP.
+        // json_encode zajisti spravne escapovani pro JS string literal
         $this->template->thankyouUrl = json_encode($this->link('Premium:thankyou'));
     }
 
-    /**
-     * Děkovací stránka — aktivuje premium a vymaže košík.
-     *
-     * Pokud je košík prázdný (uživatel refreshnul stránku), přesměrujeme na plány.
-     * Tím zajistíme idempotenci — premium se neaktivuje dvakrát.
-     */
+    // Dekovaci stranka - aktivuje premium a vymaze kosik.
+    // Pokud je kosik prazdny (uzivatel refreshnul stranku), presmerujeme na plany.
+    // Tim zajistime idempotenci - premium se neaktivuje dvakrat.
     public function renderThankyou(): void
     {
         if (!$this->getUser()->isLoggedIn()) {
@@ -106,7 +96,7 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
 
         $cart = $this->cartFacade->getCart();
         if (!$cart) {
-            // Košík je prázdný — buď již zpracováno, nebo přišli přímo na URL.
+            // kosik je prazdny - bud uz zpracovano, nebo prisli primo na URL
             $this->redirect('Premium:plans');
         }
 

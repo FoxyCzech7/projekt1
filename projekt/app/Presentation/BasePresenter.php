@@ -6,15 +6,14 @@ use App\Model\Newsletter\NewsletterFacade;
 use App\Model\Notifications\NotificationFacade;
 use Nette\Application\UI\Presenter;
 
-/**
- * Základní presenter — nastavuje proměnné společné pro všechny šablony.
- * Každý presenter dědí z této třídy místo přímo z Presenter.
- *
- * Používá @inject místo konstruktoru, aby podtřídy mohly mít vlastní
- * konstruktory bez nutnosti volat parent::__construct() s parametry.
- */
+// Zakladni presenter - nastavuje promenne spolecne pro vsechny sablony.
+// Kazdy presenter dedi z teto tridy misto primo z Presenter.
+// Pouziva @inject misto konstruktoru, aby podtridy mohly mit vlastni
+// konstruktory bez nutnosti volat parent::__construct() s parametry.
 abstract class BasePresenter extends Presenter
 {
+    // @inject - Nette DI nastavi tuto property automaticky pred startup()
+    // Pouzivame public, protoze Nette DI nemuze nastavit private/protected property.
     /** @inject */
     public NotificationFacade $notificationFacade;
 
@@ -25,7 +24,7 @@ abstract class BasePresenter extends Presenter
     {
         parent::beforeRender();
 
-        // Počet nepřečtených notifikací — cachován v session (TTL 30 s), aby se DB nedotazovala při každém requestu
+        // pocet neprectenych notifikaci - cachovano v session (TTL 30 s), aby se DB nedotazovala pri kazdem requestu
         if ($this->getUser()->isLoggedIn()) {
             $notifSession = $this->getSession('notif');
             if (!isset($notifSession->count) || (time() - ($notifSession->ts ?? 0)) > 30) {
@@ -37,10 +36,10 @@ abstract class BasePresenter extends Presenter
             $this->template->notifCount = 0;
         }
 
-        // Zjistí, zda je aktuální uživatel přihlášen k odběru newsletteru.
-        // Primárně čte ze session (uloženo při subscribe/change).
-        // Fallback pro přihlášené uživatele: zkontroluje jejich účtový email v DB —
-        // pokryje případ kdy přihlásili odběr z jiného zařízení/prohlížeče.
+        // zjisti, zda je aktualni uzivatel prihlasen k odberu newsletteru.
+        // primarně cte ze session (ulozeno pri subscribe/change).
+        // fallback pro prihlasene uzivatele: zkontroluje jejich ucet email v DB -
+        // pokryje pripad kdy prihlasili odber z jineho zarizeni/prohlizece.
         $session = $this->getSession('newsletter');
         $subscribedEmail = $session->email ?? null;
 
@@ -49,7 +48,7 @@ abstract class BasePresenter extends Presenter
             $userEmail = $identity ? ($identity->email ?? null) : null;
             if ($userEmail && $this->newsletterFacade->isSubscribed($userEmail)) {
                 $subscribedEmail = $userEmail;
-                $session->email  = $userEmail; // Uloží do session, aby se DB nedotazovala při každém requestu
+                $session->email  = $userEmail; // ulozi do session, aby se DB nedotazovala pri kazdem requestu
             }
         }
 

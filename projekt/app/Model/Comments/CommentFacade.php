@@ -6,8 +6,8 @@ use App\Model\Likes\CommentLikesRepository;
 use App\Model\Notifications\NotificationFacade;
 use Nette\Database\Table\ActiveRow;
 
-// Fasáda pro operace s komentáři — orchestruje CommentsRepository, CommentLikesRepository
-// a NotificationFacade. Presentery volají tuto třídu, nikoli repository přímo.
+// Fasada pro operace s komentari - orchestruje CommentsRepository, CommentLikesRepository
+// a NotificationFacade. Presentery volaji tuto tridu, nikoli repository primo.
 final class CommentFacade
 {
     public function __construct(
@@ -16,24 +16,24 @@ final class CommentFacade
         private NotificationFacade $notificationFacade,
     ) {}
 
-    // Najde komentář podle ID, nebo vrátí null.
+    // Najde komentar podle ID, nebo vrati null.
     public function findById(int $id): ?ActiveRow
     {
         return $this->commentsRepository->findById($id);
     }
 
-    // Vrátí komentáře příspěvku jako strom objektů — každý uzel má pole $children s odpověďmi.
-    // Strom se sestavuje ve dvou průchodech v PHP (ne rekurzivním SQL), aby kód fungoval
-    // i na starších verzích MariaDB bez podpory CTE (Common Table Expressions).
+    // Vrati komentare prispevku jako strom objektu - kazdy uzel ma pole $children s odpovedi.
+    // Strom se sestavuje ve dvou pruchodech v PHP (ne rekurzivnim SQL), aby kod fungoval
+    // i na starsich verzich MariaDB bez podpory CTE (Common Table Expressions).
     public function getCommentsByPost(int $postId): array
     {
         $byId = [];
         $roots = [];
 
-        // JOIN dotaz načte komentáře i autory najednou — eliminuje N+1 problém oproti ref() v cyklu.
+        // JOIN dotaz nacte komentare i autory najednou - eliminuje N+1 problem oproti ref() v cyklu
         $rows = $this->commentsRepository->findByPostIdWithUsers($postId);
 
-        // Průchod 1: vytvoří stdClass uzly indexované podle ID.
+        // pruchod 1: vytvori stdClass uzly indexovane podle ID
         foreach ($rows as $comment) {
             $node = (object) [
                 'id'         => $comment->id,
@@ -42,7 +42,7 @@ final class CommentFacade
                 'user_id'    => $comment->user_id,
                 'post_id'    => $comment->post_id,
                 'parent_id'  => $comment->parent_id ?? null,
-                // user_username pochází z JOIN; pokud NULL (host), použijeme name z formuláře.
+                // user_username pochazi z JOIN; pokud NULL (host), pouzijeme name z formulare
                 'username'   => $comment->user_username ?? $comment->name,
                 'email'      => $comment->user_id !== null ? ($comment->user_email ?? '') : $comment->email,
                 'likes_count'=> $comment->likes_count,
@@ -51,12 +51,12 @@ final class CommentFacade
             $byId[$comment->id] = $node;
         }
 
-        // Průchod 2: přiřadí uzly do children svého rodiče; kořenové uzly jdou do $roots.
+        // pruchod 2: priradi uzly do children sveho rodice; kořenove uzly jdou do $roots
         foreach ($byId as $node) {
             if ($node->parent_id !== null && isset($byId[$node->parent_id])) {
                 $byId[$node->parent_id]->children[] = $node;
             } else {
-                // Komentář nemá rodiče (nebo rodič neexistuje) — je kořenem stromu.
+                // komentar nema rodice (nebo rodic neexistuje) - je korenem stromu
                 $roots[] = $node;
             }
         }
@@ -64,8 +64,8 @@ final class CommentFacade
         return $roots;
     }
 
-    // Vloží nový komentář nebo odpověď; $parentId = null znamená kořenový komentář.
-    // $userId = null pro nepřihlášené uživatele — ti zadávají jméno a email ručně.
+    // Vlozi novy komentar nebo odpoved; $parentId = null znamena kořenovy komentar.
+    // $userId = null pro neprihlasene uzivatele - ti zadavaji jmeno a email rucne.
     public function addComment(
         int $postId,
         ?int $userId,
@@ -74,7 +74,7 @@ final class CommentFacade
         string $content,
         ?int $parentId = null,
     ): void {
-        // likes_count se nastavuje explicitně na 0, protože DB sloupec nemá DEFAULT hodnotu.
+        // likes_count se nastavuje explicitne na 0, protoze DB sloupec nema DEFAULT hodnotu
         $this->commentsRepository->insert([
             'post_id'    => $postId,
             'name'       => $name,
@@ -86,7 +86,7 @@ final class CommentFacade
             'parent_id'  => $parentId,
         ]);
 
-        // Notifikace autorovi rodičovského komentáře — jen pokud odpovídá jiný uživatel.
+        // notifikace autorovi rodicovského komentare - jen pokud odpovida jiny uzivatel
         if ($parentId !== null && $userId !== null) {
             $parent = $this->commentsRepository->findById($parentId);
             if ($parent && $parent->user_id !== null && $parent->user_id !== $userId) {
@@ -100,13 +100,13 @@ final class CommentFacade
         }
     }
 
-    // Smaže komentář podle ID — odpovědi zůstanou v DB (osirují), DB CASCADE je neřeší.
+    // Smaze komentar podle ID - odpovedi zustanou v DB (osirují), DB CASCADE je neresi.
     public function deleteComment(int $id): void
     {
         $this->commentsRepository->delete($id);
     }
 
-    // Aktualizuje obsah komentáře a nastaví updated_at na aktuální čas.
+    // Aktualizuje obsah komentare a nastavi updated_at na aktualni cas.
     public function updateComment(int $id, string $content): void
     {
         $comment = $this->commentsRepository->findById($id);
@@ -115,21 +115,21 @@ final class CommentFacade
         }
     }
 
-    // Přidá nebo odebere lajk na komentáři a aktualizuje počítadlo.
-    // Zasahuje do dvou tabulek (comment_likes + comments), proto logika patří do fasády.
+    // Prida nebo odebere lajk na komentari a aktualizuje pocitadlo.
+    // Zasahuje do dvou tabulek (comment_likes + comments), proto logika patri do fasady.
     public function toggleLike(int $commentId, int $userId): void
     {
         $like = $this->commentLikesRepository->findByUserAndComment($userId, $commentId);
         if ($like) {
-            // Lajk existuje — odebereme ho a snížíme počitadlo.
+            // lajk existuje - odebereme ho a snizime pocitadlo
             $like->delete();
             $this->commentsRepository->decrementLikes($commentId);
         } else {
-            // Lajk neexistuje — přidáme ho, zvýšíme počitadlo a notifikujeme autora.
+            // lajk neexistuje - pridame ho, zvysime pocitadlo a notifikujeme autora
             $this->commentLikesRepository->insert(['user_id' => $userId, 'comment_id' => $commentId]);
             $this->commentsRepository->incrementLikes($commentId);
 
-            // Notifikace autorovi komentáře (ne sobě samému)
+            // notifikace autorovi komentare (ne sobe samemu)
             $comment = $this->commentsRepository->findById($commentId);
             if ($comment && $comment->user_id !== null && $comment->user_id !== $userId) {
                 $this->notificationFacade->create(
@@ -142,7 +142,7 @@ final class CommentFacade
         }
     }
 
-    // Vrátí množinu ID komentářů, které daný uživatel lajknul — pro zobrazení stavu tlačítka v šabloně.
+    // Vrati mnozinu ID komentaru, ktere dany uzivatel lajknul - pro zobrazeni stavu tlacitka v sablone.
     public function getUserLikedCommentIds(int $userId): array
     {
         return $this->commentLikesRepository->getUserLikedCommentIds($userId);

@@ -32,7 +32,7 @@ class Bootstrap
 
 	public function initializeEnvironment(): void
 	{
-		// Nastav timezone shodně s MariaDB aby se created_at správně porovnávalo s NOW().
+		// nastav timezone shodne s MariaDB aby se created_at spravne porovnavalo s NOW()
 		date_default_timezone_set('Europe/Prague');
 
 		$this->configurator->setDebugMode(true);
@@ -52,5 +52,5 @@ class Bootstrap
 	}
 
 
-	
+
 }

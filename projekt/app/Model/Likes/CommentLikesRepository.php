@@ -5,18 +5,17 @@ namespace App\Model\Likes;
 use App\Model\BaseRepository;
 use Nette\Database\Table\ActiveRow;
 
-// Repository pro tabulku 'comment_likes' — každý záznam je lajk uživatele na komentáři.
-// Analogie k LikesRepository, ale pro komentáře místo příspěvků.
+// Repository pro tabulku 'comment_likes' - kazdy zaznam je lajk uzivatele na komentari.
+// Analogie k LikesRepository, ale pro komentare misto prispevku.
 class CommentLikesRepository extends BaseRepository
 {
-    // Vrátí název tabulky — vyžadováno abstraktní třídou BaseRepository.
     protected function getTableName(): string
     {
         return 'comment_likes';
     }
 
-    // Najde lajk daného uživatele na daném komentáři, nebo vrátí null pokud neexistuje.
-    // CommentFacade::toggleLike() tuto metodu používá ke zjištění, zda lajk přidat nebo odebrat.
+    // Najde lajk daneho uzivatele na danem komentari, nebo vrati null pokud neexistuje.
+    // CommentFacade::toggleLike() tuto metodu pouziva ke zjisteni, zda lajk pridat nebo odebrat.
     public function findByUserAndComment(int $userId, int $commentId): ?ActiveRow
     {
         return $this->getTable()
@@ -25,10 +24,10 @@ class CommentLikesRepository extends BaseRepository
             ->fetch();
     }
 
-    // Vrátí množinu ID komentářů, které daný uživatel lajknul.
-    // fetchPairs('comment_id', 'comment_id') vytvoří pole [commentId => commentId] pro O(1) lookup.
-    // Na rozdíl od postů se nefiltruje podle příspěvku — detail příspěvku zobrazuje jen jeden post,
-    // takže počet komentářů je vždy malý a dotaz zůstane efektivní.
+    // Vrati mnozinu ID komentaru, ktere dany uzivatel lajknul.
+    // fetchPairs('comment_id', 'comment_id') vytvori pole [commentId => commentId] pro O(1) lookup.
+    // Na rozdil od postu se nefiltruje podle prispevku - detail prispevku zobrazuje jen jeden post,
+    // takze pocet komentaru je vzdy maly a dotaz zustane efektivni.
     public function getUserLikedCommentIds(int $userId): array
     {
         return $this->getTable()

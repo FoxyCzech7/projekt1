@@ -4,24 +4,24 @@ namespace App\Model\Bookmarks;
 
 use Nette\Database\Explorer;
 
-// Fasáda pro správu záložek — uživatel si může uložit příspěvky pro pozdější čtení.
-// Pracuje přímo s Explorer (bez repository vrstvy), protože operace jsou jednoduché a přímé.
+// Fasada pro spravu zalozek - uzivatel si muze ulozit prispevky pro pozdejsi cteni.
+// Pracuje primo s Explorer (bez repository vrstvy), protoze operace jsou jednoduche a prime.
 final class BookmarkFacade
 {
     public function __construct(private Explorer $database) {}
 
-    // Přidá záložku pokud neexistuje, nebo ji odebere pokud existuje (toggle chování).
-    // Vrátí true = záložka byla přidána, false = záložka byla odebrána.
+    // Prida zalozku pokud neexistuje, nebo ji odebere pokud existuje (toggle chovani).
+    // Vrati true = zalozka byla pridana, false = zalozka byla odebrara.
     public function toggle(int $userId, int $postId): bool
     {
         $row = $this->database->table('bookmarks')
             ->where('user_id', $userId)->where('post_id', $postId)->fetch();
         if ($row) {
-            // Záložka existuje — odebereme ji.
+            // zalozka existuje - odebereme ji
             $row->delete();
             return false;
         }
-        // Záložka neexistuje — vytvoříme ji s aktuálním časem.
+        // zalozka neexistuje - vytvorime ji s aktualnim casem
         $this->database->table('bookmarks')->insert([
             'user_id'    => $userId,
             'post_id'    => $postId,
@@ -30,15 +30,15 @@ final class BookmarkFacade
         return true;
     }
 
-    // Zjistí, zda má daný uživatel příspěvek v záložkách — pro zobrazení stavu tlačítka.
+    // Zjisti, zda ma dany uzivatel prispevek v zalozKach - pro zobrazeni stavu tlacitka.
     public function isBookmarked(int $userId, int $postId): bool
     {
         return (bool) $this->database->table('bookmarks')
             ->where('user_id', $userId)->where('post_id', $postId)->fetch();
     }
 
-    // Vrátí záložky uživatele s daty příspěvků přes SQL JOIN, seřazené od nejnovější záložky.
-    // bookmarked_at alias odlišuje datum záložky od data vytvoření příspěvku (created_at).
+    // Vrati zalozky uzivatele s daty prispevku pres SQL JOIN, serazene od nejnovejsi zalozky.
+    // bookmarked_at alias odlisuje datum zalozky od data vytvoreni prispevku (created_at).
     public function getUserBookmarks(int $userId): array
     {
         return $this->database->query(

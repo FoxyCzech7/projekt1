@@ -13,7 +13,7 @@ final class NewsletterFacade
         private Mailer $mailer,
     ) {}
 
-    /** Přihlásí email k odběru. Hází výjimku pokud email již existuje. */
+    // Prihlas email k odberu. Hazi vyjimku pokud email uz existuje.
     public function subscribe(string $email): void
     {
         if ($this->isSubscribed($email)) {
@@ -40,13 +40,9 @@ final class NewsletterFacade
         return $this->database->table('newsletter_subscribers')->count('*');
     }
 
-    /**
-     * Odešle newsletter o novém příspěvku všem odběratelům.
-     * Vrátí počet odeslaných emailů.
-     *
-     * Vyžaduje nakonfigurovaný SMTP v config/common.neon:
-     *   mail: smtp: host: smtp.example.com ...
-     */
+    // Odesle newsletter o novem prispevku vsem odberatelum.
+    // Vrati pocet odeslanych emailu.
+    // Vyzaduje nakonfigurovany SMTP v config/common.neon.
     public function sendNewPost(int $postId, string $baseUrl): int
     {
         $post = $this->database->table('posts')->get($postId);
@@ -74,7 +70,7 @@ final class NewsletterFacade
                 $this->mailer->send($mail);
                 $sent++;
             } catch (\Exception) {
-                // Jeden neúspěšný email nezastaví odesílání ostatním
+                // jeden neuspesny email nezastavi odesilani ostatnim
             }
         }
 

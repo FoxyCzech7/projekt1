@@ -9,10 +9,8 @@ use App\Model\Premium\PremiumFacade;
 use App\Model\Tags\TagFacade;
 use Nette\Security\Authorizator;
 
-/**
- * Formulář pro vytvoření a editaci příspěvku.
- * Přístup povolen jen přihlášeným autorům a adminům.
- */
+// Formular pro vytvoreni a editaci prispevku.
+// Pristup povolen jen prihlasenym autorum a adminům.
 final class PostFormPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -83,9 +81,9 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
         $form->addTextArea('content', 'Obsah:')
             ->setRequired('Zadejte prosím obsah příspěvku.');
 
-        // Checkbox zobrazíme jen uživatelům, kteří sami mají aktivní premium nebo jsou admin.
-        // Server-side guard v postFormSucceeded() pak ignoruje is_premium=true od ostatních,
-        // takže podvržený POST request taky nezabere.
+        // checkbox zobrazime jen uzivatelum, kteri sami maji aktivni premium nebo jsou admin.
+        // server-side guard v postFormSucceeded() pak ignoruje is_premium=true od ostatnich,
+        // takze podvrzeny POST request taky nezabere.
         if ($this->canCreatePremiumPost()) {
             $form->addCheckbox('is_premium', 'Prémiový příspěvek')
                 ->setOption('description', 'Obsah uvidí pouze prémiové uživatelé.');
@@ -126,7 +124,7 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
         }
 
         if ($id) {
-            // Editace existujícího příspěvku
+            // editace existujiciho prispevku
             $post = $this->postFacade->findById($id);
             if (!$post) {
                 $this->error('Příspěvek nenalezen.');
@@ -136,15 +134,15 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
                 $this->redirect('Post:show', $id);
             }
 
-            // Pokud uživatel nenahrál nový obrázek, ponecháme stávající cestu.
+            // pokud uzivatel nenahrál novy obrazek, ponechame stavajici cestu
             $imagePath = ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk())
                 ? $this->saveImage($data->image, $uploadsDir, $id)
                 : $post->image;
 
             $isPremium   = $this->canCreatePremiumPost() && $data->is_premium;
             $scheduledAt = !empty($data->scheduled_at) ? new \DateTime($data->scheduled_at) : null;
-            // Pokud je datum v budoucnosti, status musí být 'published' —
-            // jinak by draft filtr bránil zveřejnění navždy.
+            // pokud je datum v budoucnosti, status musi byt 'published' -
+            // jinak by draft filtr branil zverejneni navzdy
             $status = ($scheduledAt && $scheduledAt > new \DateTime()) ? 'published' : $data->status;
             $this->postFacade->updatePost(
                 $id, $data->title, $data->content, $imagePath, $isPremium,
@@ -154,13 +152,13 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
             $this->flashMessage('Příspěvek byl upraven.', 'success');
             $this->redirect('Post:show', $id);
         } else {
-            // Vytvoření nového příspěvku
+            // vytvoreni noveho prispevku
             if (!$this->isAllowed('post', 'add')) {
                 $this->flashMessage('Nemáte oprávnění vytvářet příspěvky.', 'error');
                 $this->redirect('Home:default');
             }
-            // Post se vytvoří nejdřív bez obrázku, aby existovalo jeho ID
-            // pro pojmenování souboru (image-{postId}.jpg).
+            // post se vytvori nejdriv bez obrazku, aby existovalo jeho ID
+            // pro pojmenovani souboru (image-{postId}.jpg)
             $isPremium   = $this->canCreatePremiumPost() && $data->is_premium;
             $scheduledAt = !empty($data->scheduled_at) ? new \DateTime($data->scheduled_at) : null;
             $status      = ($scheduledAt && $scheduledAt > new \DateTime()) ? 'published' : ($data->status ?? 'published');
@@ -187,10 +185,8 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
         return 'img/posts/' . $finalName;
     }
 
-    /**
-     * Převede diakritiku a odstraní nebezpečné znaky z názvu souboru.
-     * Bez tohoto kroku by útočník mohl nahrát soubor se jménem jako "../../config.php".
-     */
+    // prevede diakritiku a odstrani nebezpecne znaky z nazvu souboru.
+    // bez tohoto kroku by utocnik mohl nahrat soubor se jmenem jako "../../config.php"
     private function sanitizeFileName(string $filename): string
     {
         $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $filename);
@@ -205,10 +201,8 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
             && ($user->isInRole('admin') || ($user->isInRole('author') && $post->user_id === $user->getId()));
     }
 
-    /**
-     * Prémiový příspěvek smí vytvořit jen ten, kdo má sám aktivní premium nebo je admin.
-     * Admin má přístup vždy; ostatní musí mít zakoupené předplatné.
-     */
+    // premiovy prispevek smi vytvorit jen ten, kdo ma sam aktivni premium nebo je admin.
+    // admin ma pristup vzdy; ostatni musi mit zakoupene predplatne.
     private function canCreatePremiumPost(): bool
     {
         $user = $this->getUser();

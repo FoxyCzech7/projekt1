@@ -29,8 +29,8 @@ final class SignPresenter extends \App\Presentation\BasePresenter
 
     public function actionOut(): void
     {
-        // Vymaže session sekci newsletteru — jinak by zůstal zobrazený "Aktivní odběr"
-        // i po přepnutí na jiný účet, protože session je společná pro celý prohlížeč.
+        // vymaze session sekci newsletteru - jinak by zustal zobrazeny "Aktivni odber"
+        // i po prepnuti na jiny ucet, protoze session je spolecna pro cely prohlizec
         $this->getSession('newsletter')->remove();
         $this->getUser()->logout();
         $this->flashMessage('Odhlášení bylo úspěšné.');
@@ -59,12 +59,12 @@ final class SignPresenter extends \App\Presentation\BasePresenter
         try {
             $identity = $this->authenticator->authenticate($values->username, $values->password);
             $user->login($identity);
-            // Zaznamenáme čas přihlášení až po úspěšném login(), kdy máme getId().
+            // cas prihlaseni zaznamenavame az po uspesnem login(), kdy mame getId()
             $this->userManager->updateLastLogin($user->getId());
             $this->redirect('Home:');
         } catch (AuthenticationException $e) {
-            // Záměrně nezobrazujeme původní chybu (neznámý uživatel vs. špatné heslo),
-            // aby útočník nemohl zjistit, která jména v systému existují.
+            // zamerně nezobrazujeme puvodni chybu (neznamy uzivatel vs. spatne heslo),
+            // aby utocnik nemohl zjistit, ktera jmena v systemu existuji
             $form->addError('Nesprávné přihlašovací údaje.');
         }
     }
@@ -94,7 +94,7 @@ final class SignPresenter extends \App\Presentation\BasePresenter
             $this->flashMessage('Registrace byla úspěšná. Nyní se můžete přihlásit.');
             $this->redirect('Sign:in');
         } catch (DuplicateNameException $e) {
-            // Každá výjimka = konkrétní chybová hláška bez porovnávání řetězců.
+            // kazda vyjimka = konkretni chybova hlaska bez porovnavani retezcu
             $form->addError('Toto uživatelské jméno je již použito.');
         } catch (DuplicateEmailException $e) {
             $form->addError('Tento email je již registrován.');

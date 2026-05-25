@@ -4,17 +4,14 @@ namespace App\Model\Premium;
 
 use Nette\Http\Session;
 
-/**
- * Nákupní košík implementovaný přes Nette Sessions.
- *
- * Košík obsahuje vždy nejvýše jeden plán (předplatné nelze kombinovat).
- * Data přežijí request díky session, ale ne přihlášení jiného uživatele.
- */
+// Nakupni kosik implementovany pres Nette Sessions.
+// Kosik obsahuje vzdy nejvyse jeden plan (predplatne nelze kombinovat).
+// Data preziji request diky session, ale ne prihlaseni jineho uzivatele.
 final class CartFacade
 {
     private const SECTION = 'premium_cart';
 
-    /** Dostupné plány předplatného. */
+    // Dostupne plany predplatneho.
     private const PLANS = [
         1 => ['id' => 1, 'name' => '1 měsíc',   'months' => 1,  'price' => 99],
         2 => ['id' => 2, 'name' => '3 měsíce',  'months' => 3,  'price' => 249],
@@ -26,22 +23,20 @@ final class CartFacade
         private Session $session,
     ) {}
 
-    /** Vrátí všechny dostupné plány. */
+    // Vrati vsechny dostupne plany.
     public function getPlans(): array
     {
         return self::PLANS;
     }
 
-    /** Vrátí jeden plán podle ID, nebo null pokud neexistuje. */
+    // Vrati jeden plan podle ID, nebo null pokud neexistuje.
     public function getPlanById(int $id): ?array
     {
         return self::PLANS[$id] ?? null;
     }
 
-    /**
-     * Uloží vybraný plán do košíku.
-     * Přepíše předchozí výběr — v košíku je vždy jen jeden plán.
-     */
+    // Ulozi vybrany plan do kosiku.
+    // Prepise predchozi vyber - v kosiku je vzdy jen jeden plan.
     public function addToCart(int $planId): void
     {
         $plan = $this->getPlanById($planId);
@@ -51,13 +46,13 @@ final class CartFacade
         $this->session->getSection(self::SECTION)->plan = $plan;
     }
 
-    /** Vrátí aktuálně vybraný plán, nebo null pokud je košík prázdný. */
+    // Vrati aktualne vybrany plan, nebo null pokud je kosik prazdny.
     public function getCart(): ?array
     {
         return $this->session->getSection(self::SECTION)->plan ?? null;
     }
 
-    /** Vyprázdní košík (po dokončení platby). */
+    // Vyprazdni kosik (po dokonceni platby).
     public function clearCart(): void
     {
         $this->session->getSection(self::SECTION)->remove();

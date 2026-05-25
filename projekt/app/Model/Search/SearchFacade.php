@@ -4,25 +4,24 @@ namespace App\Model\Search;
 
 use Nette\Database\Explorer;
 
-// Fasáda pro fulltextové vyhledávání v příspěvcích a tazích.
-// Vyhledávání probíhá přes přímý SQL dotaz, protože potřebuje DISTINCT a řazení
-// podle relevance — to Nette Selection API nepodporuje snadno.
+// Fasada pro fulltextove vyhledavani v prispëvcich a tazich.
+// Vyhledavani probiha pres primy SQL dotaz, protoze potrebuje DISTINCT a razeni
+// podle relevance - to Nette Selection API nepodporuje snadno.
 final class SearchFacade
 {
     public function __construct(
         private Explorer $database,
     ) {}
 
-    // Hledá publikované příspěvky podle shody v názvu, obsahu nebo tagu.
-    // Výsledky jsou seřazeny: shoda v názvu/tagu má přednost před shodou jen v obsahu.
+    // Hleda publikovane prispevky podle shody v nazvu, obsahu nebo tagu.
+    // Vysledky jsou serazeny: shoda v nazvu/tagu ma prednost pred shodou jen v obsahu.
     public function search(string $query, int $limit = 30): array
     {
-        // Zabalíme dotaz do LIKE patternů pro SQL.
         $like = '%' . $query . '%';
-        // DISTINCT je nutný kvůli JOIN s tagy — jeden příspěvek má více tagů
-        // a bez DISTINCT by se ve výsledcích zobrazoval vícekrát.
-        // ORDER BY výraz s (title LIKE ? OR tags.name LIKE ?) vrátí 1 pro shodu, 0 pro ne-shodu;
-        // DESC řazení tak puts relevantní výsledky na začátek.
+        // DISTINCT je nutny kvuli JOIN s tagy - jeden prispevek ma vice tagu
+        // a bez DISTINCT by se ve vysledcich zobrazoval vicekrat.
+        // ORDER BY vyraz s (title LIKE ? OR tags.name LIKE ?) vraci 1 pro shodu, 0 pro ne-shodu;
+        // DESC razeni tak puts relevantni vysledky na zacatek.
         return $this->database->query(
             "SELECT DISTINCT posts.id, posts.title, posts.content,
                     posts.created_at, posts.likes_count, posts.views, posts.is_premium

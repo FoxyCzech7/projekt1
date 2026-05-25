@@ -17,7 +17,7 @@ final class NotificationsPresenter extends \App\Presentation\BasePresenter
     {
         $userId = $this->getUser()->getId();
         $this->notificationFacade->markAllRead($userId);
-        // Zneplatní session cache počtu notifikací — po markAllRead je správná hodnota 0
+        // zneplatni session cache poctu notifikaci - po markAllRead je spravna hodnota 0
         $this->getSession('notif')->remove();
         $this->template->notifications = $this->notificationFacade->getAll($userId);
     }

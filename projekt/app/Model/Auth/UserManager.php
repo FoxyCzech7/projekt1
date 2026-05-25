@@ -6,9 +6,9 @@ use Nette;
 use Nette\Security\Passwords;
 use Nette\Database\Explorer;
 
-// Správa uživatelů, registrace, vyhledávání, mazání a záznam přihlášení
-// Tato třída je jediné místo kde se pracuje s tabulkou 'users' mimo autentizaci
-// Presentery (hlavne SignPresenter) volají tuto třídu místo přímého přístupu k DB
+// Sprava uzivatelu, registrace, vyhledavani, mazani a zaznam prihlaseni.
+// Tato trida je jedine misto kde se pracuje s tabulkou 'users' mimo autentizaci.
+// Presentery (hlavne SignPresenter) volaji tuto tridu misto primého pristupu k DB.
 final class UserManager
 {
     use Nette\SmartObject;
@@ -18,8 +18,8 @@ final class UserManager
         private Passwords $passwords,
     ) {}
 
-    // Registrace bez emailu - pro interní použití (seed skripty, admin příkazy).
-    // Hází DuplicateNameException pokud uživatelské jméno již existuje.
+    // Registrace bez emailu - pro interni pouziti (seed skripty, admin prikazy).
+    // Hazi DuplicateNameException pokud uzivatelske jmeno uz existuje.
     public function register(string $username, string $password, string $role = 'user'): void
     {
         if ($this->exists($username)) {
@@ -33,9 +33,9 @@ final class UserManager
         ]);
     }
 
-    // Registrace z formuláře - vyžaduje email a hází typované výjimky pro různé příčiny chyb.
-    // Typované výjimky (DuplicateNameException, DuplicateEmailException) umožňují presenteru
-    // zobrazit přesnou chybovou hlášku bez porovnávání textů zpráv výjimek.
+    // Registrace z formulare - vyzaduje email a hazi typovane vyjimky pro ruzne priciny chyb.
+    // Typovane vyjimky (DuplicateNameException, DuplicateEmailException) umoznuji presenteru
+    // zobrazit presnou chybovou hlasku bez porovnavani textu zprav vyjimek.
     public function registerWithEmail(string $username, string $email, string $password, string $role = 'user'): void
     {
         if ($this->exists($username)) {
@@ -46,16 +46,16 @@ final class UserManager
             throw new DuplicateEmailException('Tento email je již registrován.');
         }
 
-        // Heslo se ukládá jako hash - nikdy jako plaintext.
+        // heslo se uklada jako hash - nikdy jako plaintext
         $this->database->table('users')->insert([
             'username' => $username,
-            'email' => $email,
+            'email'    => $email,
             'password' => $this->passwords->hash($password),
-            'role' => $role,
+            'role'     => $role,
         ]);
     }
 
-    // Najde uživatele podle uživatelského jména - vrátí řádek nebo null.
+    // Najde uzivatele podle uzivatelského jmena - vrati radek nebo null.
     public function getByUsername(string $username): ?Nette\Database\Table\ActiveRow
     {
         return $this->database->table('users')
@@ -63,33 +63,33 @@ final class UserManager
             ->fetch();
     }
 
-    // Zkontroluje, zda uživatelské jméno již existuje v DB.
+    // Zkontroluje, zda uzivatelske jmeno uz existuje v DB.
     public function exists(string $username): bool
     {
         return $this->getByUsername($username) !== null;
     }
 
-    // Zkontroluje, zda email již existuje v DB - pro validaci při registraci.
+    // Zkontroluje, zda email uz existuje v DB - pro validaci pri registraci.
     public function existsByEmail(string $email): bool
     {
         return $this->database->table('users')->where('email', $email)->fetch() !== null;
     }
 
-    // Vrátí Selection všech uživatelů — pro přehled v admin sekci.
+    // Vrati Selection vsech uzivatelu - pro prehled v admin sekci.
     public function getAllUsers(): Nette\Database\Table\Selection
     {
         return $this->database->table('users');
     }
 
-    // Smaže uživatele podle ID - volat jen po smazání závislých záznamů (viz UserProfileFacade).
+    // Smaze uzivatele podle ID - volat jen po smazani zavislych zaznamu (viz UserProfileFacade).
     public function deleteUser(int $id): void
     {
         $this->database->table('users')->where('id', $id)->delete();
     }
 
-    // Zaznamená čas posledního úspěšného přihlášení do sloupce last_login.
-    // Volá se ihned po User::login() v SignPresenter.
-    // Vyžaduje existenci sloupce last_login DATETIME NULL v tabulce users.
+    // Zaznamena cas posledniho uspesneho prihlaseni do sloupce last_login.
+    // Vola se ihned po User::login() v SignPresenter.
+    // Vyzaduje existenci sloupce last_login DATETIME NULL v tabulce users.
     public function updateLastLogin(int $userId): void
     {
         $this->database->table('users')

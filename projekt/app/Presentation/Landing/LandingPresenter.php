@@ -12,13 +12,13 @@ final class LandingPresenter extends Presenter
     protected function startup(): void
     {
         parent::startup();
-        // Vypne standardní @layout.latte - landing page má vlastní kompletní HTML strukturu
+        // vypne standardni @layout.latte - landing page ma vlastni kompletni HTML strukturu
         $this->setLayout(false);
     }
 
     public function renderDefault(): void
     {
-        // Šablona podle toho zobrazí buď "Přihlásit/Registrovat" nebo "Můj profil"
+        // sablona podle toho zobrazi bud "Prihlasit/Registrovat" nebo "Muj profil"
         $this->template->isLoggedIn = $this->getUser()->isLoggedIn();
     }
 }

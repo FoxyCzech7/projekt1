@@ -53,16 +53,16 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         $this->template->isBookmarked = $user->isLoggedIn()
             && $this->bookmarkFacade->isBookmarked($user->getId(), $id);
 
-        // Komentáře jsou pole stdClass objektů (ne ActiveRow) — fasáda je obohacuje
-        // o username a email uživatele přes ref(), aby šablona nemusela dělat JOIN ručně.
+        // komentare jsou pole stdClass objektu (ne ActiveRow) - fasada je obohacuje
+        // o username a email uzivatele pres JOIN, aby sablona nemusela delat JOIN rucne
         $this->template->comments = $this->commentFacade->getCommentsByPost($id);
 
         $userHasLiked = [];
         $userHasLikedComments = [];
         if ($this->getUser()->isLoggedIn()) {
             $userId = $this->getUser()->getId();
-            // Pro post předáváme [$id] - pole s jedním prvkem, aby getUserLikedPostIds
-            // mohlo použít stejnou cestu kódu jako na homepage (kde je jich více).
+            // pro post predavame [$id] - pole s jednim prvkem, aby getUserLikedPostIds
+            // mohlo pouzit stejnou cestu kodu jako na homepage (kde je jich vice)
             $userHasLiked = $this->postFacade->getUserLikedPostIds($userId, [$id]);
             $userHasLikedComments = $this->commentFacade->getUserLikedCommentIds($userId);
         }
@@ -80,7 +80,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         $form = new Form;
         $user = $this->getUser();
 
-        // Přihlášení uživatelé nezadávají jméno ani email - berou se z jejich identity.
+        // prihlaseni uzivatele nezadavaji jmeno ani email - berou se z jejich identity
         if ($user->isLoggedIn()) {
             $form->addTextArea('content', 'Komentář:')
                 ->setRequired('Zadejte prosím obsah komentáře.')
@@ -97,7 +97,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
                 ->setRequired('Zadejte prosím obsah komentáře.')
                 ->addRule(Form::MIN_LENGTH, 'Komentář musí mít alespoň %d znaků.', 5);
         }
-        // parent_id = 0 znamená kořenový komentář; JS ho nastavuje při kliknutí na "Odpovědět".
+        // parent_id = 0 znamena kořenovy komentar; JS ho nastavi pri kliknuti na "Odpovedet"
         $form->addHidden('parent_id', '0');
 
         $form->addSubmit('send', 'Přidat komentář');
@@ -118,8 +118,8 @@ final class PostPresenter extends \App\Presentation\BasePresenter
 
         $user = $this->getUser();
         if ($user->isLoggedIn()) {
-            // $identity->username funguje jako přístup přes getData()['username']
-            // díky magic __get v Nette\Security\Identity.
+            // $identity->username funguje jako pristup pres getData()['username']
+            // diky magic __get v Nette\Security\Identity
             $name = $user->getIdentity()->username ?? 'Anonym';
             $email = '';
             $userId = $user->getId();
@@ -129,7 +129,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
             $userId = null;
         }
 
-        // parent_id > 0 = odpověď na existující komentář; 0 nebo prázdné = kořenový.
+        // parent_id > 0 = odpoved na existujici komentar; 0 nebo prazdne = kořenovy
         $parentId = !empty($data->parent_id) && (int) $data->parent_id > 0
             ? (int) $data->parent_id
             : null;
@@ -201,10 +201,8 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         }
     }
 
-    /*
-      Zkontroluje oprávnění přes Authorizator (RBAC).
-      Iterujeme přes role, protože uživatel jich může mít víc.
-     */
+    // zkontroluje opravneni pres Authorizator (RBAC)
+    // iterujeme pres role, protoze uzivatel jich muze mit vic
     private function isAllowed(string $resource, string $privilege): bool
     {
         $user = $this->getUser();

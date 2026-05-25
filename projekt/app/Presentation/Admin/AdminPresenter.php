@@ -6,10 +6,8 @@ use App\Model\Admin\UserProfileFacade;
 use App\Model\Feed\FeedImportFacade;
 use Nette\Application\UI\Presenter;
 
-/**
- * Admin sekce — přehled uživatelů a jejich profily.
- * Přístupný pouze pro roli 'admin'.
- */
+// Admin sekce - prehled uzivatelu a jejich profily.
+// Pristupny pouze pro roli 'admin'.
 final class AdminPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -28,10 +26,8 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
         }
     }
 
-    /**
-     * Stáhne nejnovější položku z RSS feedu a vytvoří z ní příspěvek.
-     * Autorem je přihlášený admin. Cache feedu se po importu vymaže.
-     */
+    // Stahne nejnovejsi polozku z RSS feedu a vytvori z ni prispevek.
+    // Autorem je prihlaseny admin. Cache feedu se po importu vymaze.
     public function actionImportFeed(): void
     {
         $uploadsDir = __DIR__ . '/../../../www/img/posts/';
@@ -50,16 +46,14 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Admin:default');
     }
 
-    /** Seznam všech uživatelů. */
+    // Seznam vsech uzivatelu.
     public function renderDefault(): void
     {
         $this->template->users = $this->userProfileFacade->getAllUsers();
     }
 
-    /**
-     * Smaže uživatele i všechna jeho data.
-     * Admin nemůže smazat sám sebe.
-     */
+    // Smaze uzivatele i vsechna jeho data.
+    // Admin nemuze smazat sam sebe.
     public function actionDelete(int $id): void
     {
         if ($id === $this->getUser()->getId()) {
@@ -72,15 +66,14 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
             $this->error('Uživatel nenalezen.');
         }
 
-        // Username uložíme před smazáním — PHPStan neví, že error() nikdy nevrátí,
-        // takže $profile by zůstal null|object i za if-blokem.
+        // username ulozime pred smazanim - error() nikdy nevrati, $profile by zustavalo null za if-blokem
         $username = $profile->username;
         $this->userProfileFacade->deleteUser($id);
         $this->flashMessage("Uživatel \"{$username}\" byl smazán.", 'success');
         $this->redirect('Admin:default');
     }
 
-    /** Profil konkrétního uživatele s grafy aktivity. */
+    // Profil konkretniho uzivatele s grafy aktivity.
     public function renderProfile(int $id): void
     {
         $profile = $this->userProfileFacade->getUserProfile($id);
@@ -89,8 +82,7 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
         }
         $this->template->profile = $profile;
 
-        // Vygenerujeme pevnou osu posledních 12 měsíců, aby graf byl vždy plný
-        // i když uživatel v některém měsíci nic nepublikoval.
+        // pevna osa poslednich 12 mesicu, aby graf byl vzdy plny i kdyz uzivatel v nekterem mesici nic nepublikoval
         $months = [];
         for ($i = 11; $i >= 0; $i--) {
             $months[] = (new \DateTime("first day of -$i months"))->format('Y-m');
@@ -99,7 +91,7 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
         $postsPerMonth = $this->userProfileFacade->getPostsPerMonth($id);
         $commentsPerMonth = $this->userProfileFacade->getCommentsPerMonth($id);
 
-        // JSON pro Chart.js — serializujeme v PHP, aby šablona jen vypsala řetězec.
+        // JSON pro Chart.js - serializujeme v PHP, aby sablona jen vypsala retezec
         $this->template->chartLabels = json_encode($months);
         $this->template->chartPosts = json_encode(array_map(fn($m) => $postsPerMonth[$m] ?? 0, $months));
         $this->template->chartComments = json_encode(array_map(fn($m) => $commentsPerMonth[$m] ?? 0, $months));

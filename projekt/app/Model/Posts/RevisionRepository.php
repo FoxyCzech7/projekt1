@@ -4,17 +4,16 @@ namespace App\Model\Posts;
 
 use App\Model\BaseRepository;
 
-// Repository pro tabulku 'post_revisions' — ukládá historii změn příspěvků.
-// Revize se vytváří vždy před přepsáním příspěvku, aby šlo obsah obnovit.
+// Repository pro tabulku 'post_revisions' - uklada historii zmen prispevku.
+// Revize se vytvari vzdy pred prepisanim prispevku, aby sel obsah obnovit.
 class RevisionRepository extends BaseRepository
 {
-    // Vrátí název tabulky — vyžadováno abstraktní třídou BaseRepository.
     protected function getTableName(): string
     {
         return 'post_revisions';
     }
 
-    // Uloží snímek příspěvku před jeho úpravou — zachová původní titulek, obsah a editora.
+    // Ulozi snimek prispevku pred jeho upravou - zachova puvodni titulek, obsah a editora.
     public function saveRevision(int $postId, string $title, string $content, int $editedBy): void
     {
         $this->getTable()->insert([
@@ -26,7 +25,7 @@ class RevisionRepository extends BaseRepository
         ]);
     }
 
-    // Vrátí všechny revize daného příspěvku seřazené od nejnovější — pro zobrazení historie.
+    // Vrati vsechny revize daneho prispevku serazene od nejnovejsi - pro zobrazeni historie.
     public function getByPost(int $postId): array
     {
         return $this->getTable()

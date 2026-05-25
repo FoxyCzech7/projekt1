@@ -19,17 +19,17 @@ final class MyAuthorizator extends Permission implements Authorizator
         $this->addResource('post');
         $this->addResource('comment');
 
-        // Práva pro guest: jen zobrazování příspěvků a komentářů
+        // Prava pro guest: jen zobrazovani prispevku a komentaru
         $this->allow('guest', ['post', 'comment'], 'view');
 
-        // User může psát a mazat jen vlastní komentáře, nesmí tvořit příspěvky
+        // User muze psat a mazat jen vlastni komentare, nesmi tvorit prispevky
         $this->allow('user', 'comment', ['add', 'deleteOwn']);
 
-        // Author může tvořit příspěvky, psát a mazat vlastní příspěvky a komentáře
+        // Author muze tvorit prispevky, psat a mazat vlastni prispevky a komentare
         $this->allow('author', 'post', ['add', 'deleteOwn']);
         $this->allow('author', 'comment', ['add', 'deleteOwn']);
 
-        // Admin může vše (včetně mazání cizích příspěvků a komentářů)
+        // Admin muze vse (vcetne mazani cizich prispevku a komentaru)
         $this->allow('admin', self::All, self::All);
     }
 }

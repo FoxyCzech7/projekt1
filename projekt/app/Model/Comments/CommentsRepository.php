@@ -5,8 +5,8 @@ namespace App\Model\Comments;
 use App\Model\BaseRepository;
 use Nette\Database\Table\Selection;
 
-// Repository pro tabulku 'comments' — zapouzdřuje DB dotazy pro komentáře.
-// Stromová struktura a notifikace jsou řešeny v CommentFacade, ne zde.
+// Repository pro tabulku 'comments' - zapouzdřuje DB dotazy pro komentare.
+// Stromova struktura a notifikace jsou reseny v CommentFacade, ne zde.
 class CommentsRepository extends BaseRepository
 {
     protected function getTableName(): string
@@ -14,8 +14,8 @@ class CommentsRepository extends BaseRepository
         return 'comments';
     }
 
-    // Vrátí komentáře pro daný příspěvek seřazené vzestupně podle data — nejstarší první.
-    // Výsledek je Selection (lazy); CommentFacade ho dál zpracuje do stromové struktury.
+    // Vrati komentare pro dany prispevek serazene vzestupne podle data - nejstarsi prvni.
+    // Vysledek je Selection (lazy); CommentFacade ho dal zpracuje do stromove struktury.
     public function findByPostId(int $postId): Selection
     {
         return $this->getTable()
@@ -23,7 +23,7 @@ class CommentsRepository extends BaseRepository
             ->order('created_at ASC');
     }
 
-    // Vrátí komentáře příspěvku i s daty autora v jednom JOIN dotazu — eliminuje N+1 problém ref().
+    // Vrati komentare prispevku i s daty autora v jednom JOIN dotazu - eliminuje N+1 problem ref().
     public function findByPostIdWithUsers(int $postId): array
     {
         return $this->database->query(
@@ -36,12 +36,12 @@ class CommentsRepository extends BaseRepository
         )->fetchAll();
     }
 
-    // Aktualizuje komentář, ale pouze pokud je $userId vlastníkem — ochrana před neoprávněnou editací.
-    // Vrací true pokud aktualizace proběhla, false pokud uživatel není vlastník nebo komentář neexistuje.
+    // Aktualizuje komentar, ale pouze pokud je $userId vlastnikem - ochrana pred neautorizovanou editaci.
+    // Vraci true pokud aktualizace probehla, false pokud uzivatel neni vlastnik nebo komentar neexistuje.
     public function updateIfOwner(int $commentId, int $userId, array $data): bool
     {
         $comment = $this->findById($commentId);
-        // Porovnání user_id (opraveno z dřívějšího author_id na aktuální název sloupce)
+        // porovnani user_id (opraveno z drivejsiho author_id na aktualni nazev sloupce)
         if ($comment && $comment->user_id === $userId) {
             $comment->update($data);
             return true;
@@ -49,13 +49,13 @@ class CommentsRepository extends BaseRepository
         return false;
     }
 
-    // Zvýší počitadlo lajků na komentáři o 1 — voláno z CommentFacade::toggleLike().
+    // Zvysi pocitadlo lajku na komentari o 1 - volano z CommentFacade::toggleLike().
     public function incrementLikes(int $id): void
     {
         $this->getTable()->where('id', $id)->update(['likes_count+=' => 1]);
     }
 
-    // Sníží počitadlo lajků na komentáři o 1 — voláno z CommentFacade::toggleLike() při odebrání.
+    // Snizi pocitadlo lajku na komentari o 1 - volano z CommentFacade::toggleLike() pri odebirani.
     public function decrementLikes(int $id): void
     {
         $this->getTable()->where('id', $id)->update(['likes_count-=' => 1]);

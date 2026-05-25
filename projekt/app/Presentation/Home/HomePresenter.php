@@ -7,10 +7,8 @@ use App\Model\Premium\PremiumFacade;
 use Nette\Application\UI\Presenter;
 use Nette\Utils\Paginator;
 
-/**
- * Zobrazuje seznam příspěvků s stránkováním.
- * Deleguje veškerou práci s daty na PostFacade — sám neví nic o DB.
- */
+// Zobrazuje seznam prispevku se strankovani.
+// Deleguje veskrou praci s daty na PostFacade - sam nevi nic o DB.
 final class HomePresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -29,7 +27,7 @@ final class HomePresenter extends \App\Presentation\BasePresenter
         $paginator->setPage($page);
         $paginator->setItemCount($this->postFacade->getPublicArticlesCount());
 
-        // Selection je lazy — data se načtou až při fetchAll() nebo iteraci v šabloně.
+        // Selection je lazy - data se nactou az pri fetchAll() nebo iteraci v sablone
         $posts = $this->postFacade->getPublicArticlesPage($paginator->getOffset(), $paginator->getLength());
 
         $this->template->posts = $posts;
@@ -37,8 +35,8 @@ final class HomePresenter extends \App\Presentation\BasePresenter
 
         $userHasLiked = [];
         if ($this->getUser()->isLoggedIn()) {
-            // fetchAll() musí proběhnout před getUserLikedPostIds(), aby byl Selection
-            // již hydratovaný — jinak by se dotaz spustil dvakrát.
+            // fetchAll() musi probehnout pred getUserLikedPostIds(), aby byl Selection
+            // uz hydratovany - jinak by se dotaz spustil dvakrat
             $postIds = array_map(fn($post) => $post->id, $posts->fetchAll());
             if ($postIds) {
                 $userHasLiked = $this->postFacade->getUserLikedPostIds($this->getUser()->getId(), $postIds);

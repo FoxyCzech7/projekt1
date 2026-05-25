@@ -36,6 +36,7 @@ final class MyAuthenticator implements Authenticator
             throw new AuthenticationException('Nesprávné heslo.');
         }
 
+        // email je v identite aby BasePresenter mohl obnovit stav odberu newsletteru po prihlaseni
         return new Identity($user->id, $user->role, ['username' => $user->username, 'email' => $user->email]);
     }
 }

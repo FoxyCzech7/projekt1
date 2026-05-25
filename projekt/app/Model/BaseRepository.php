@@ -6,55 +6,55 @@ use Nette\Database\Explorer;
 use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
 
-// Abstraktní základní třída pro všechny repository — definuje společné CRUD operace.
-// Každé konkrétní repository musí implementovat getTableName() s názvem své tabulky.
+// Abstraktni zakladni trida pro vsechna repository - definuje spolecne CRUD operace.
+// Kazde konkretni repository musi implementovat getTableName() s nazvem sve tabulky.
 abstract class BaseRepository
 {
     public function __construct(
         protected Explorer $database,
     ) {}
 
-    // Vrátí název databázové tabulky, se kterou toto repository pracuje.
+    // Vrati nazev databazove tabulky, se kterou toto repository pracuje.
     abstract protected function getTableName(): string;
 
-    // Vrátí instanci Selection pro tabulku — používá se interně pro zjednodušení dotazů.
+    // Vrati instanci Selection pro tabulku - pouziva se interně pro zjednoduseni dotazu.
     protected function getTable(): Selection
     {
         return $this->database->table($this->getTableName());
     }
 
-    // Vrátí všechny záznamy z tabulky jako Selection (lazy — data se načtou až při iteraci).
+    // Vrati vsechny zaznamy z tabulky jako Selection (lazy - data se nactou az pri iteraci).
     public function findAll(): Selection
     {
         return $this->getTable();
     }
 
-    // Vrátí jeden řádek podle primárního klíče, nebo null pokud neexistuje.
+    // Vrati jeden radek podle primarniho klice, nebo null pokud neexistuje.
     public function findById(int $id): ?ActiveRow
     {
         return $this->getTable()->get($id);
     }
 
-    // Vloží nový záznam do tabulky a vrátí vytvořený řádek.
+    // Vlozi novy zaznam do tabulky a vrati vytvoreny radek.
     public function insert(array $data): ActiveRow
     {
         return $this->getTable()->insert($data);
     }
 
-    // Aktualizuje existující záznam podle ID; nic nedělá pokud ID neexistuje.
+    // Aktualizuje existujici zaznam podle ID; nic nedela pokud ID neexistuje.
     public function update(int $id, array $data): void
     {
         $this->getTable()->get($id)?->update($data);
     }
 
-    // Smaže záznam podle ID; nic nedělá pokud ID neexistuje.
+    // Smaze zaznam podle ID; nic nedela pokud ID neexistuje.
     public function delete(int $id): void
     {
         $this->getTable()->get($id)?->delete();
     }
 
-    // Uloží záznam — pokud $id je null, vytvoří nový; pokud existuje, aktualizuje ho.
-    // Pokud $id není null ale záznam neexistuje, vloží nový (ochrana před nekonzistencí).
+    // Ulozi zaznam - pokud $id je null, vytvori novy; pokud existuje, aktualizuje ho.
+    // Pokud $id neni null ale zaznam neexistuje, vlozi novy (ochrana pred nekonzistenci).
     public function save(?int $id, array $data): ActiveRow
     {
         if ($id === null) {

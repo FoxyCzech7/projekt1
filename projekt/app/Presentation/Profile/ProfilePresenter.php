@@ -10,11 +10,9 @@ use App\Model\Profile\ProfileFacade;
 use Nette\Application\UI\Form;
 use Nette\Database\Explorer;
 
-/**
- * Spravuje dva typy profilů:
- *   - renderView()    → veřejný profil libovolného uživatele (nevyžaduje přihlášení)
- *   - renderDefault() → vlastní profil přihlášeného uživatele se statistikami a editací
- */
+// Spravuje dva typy profilu:
+//   - renderView()    → verejny profil libovolneho uzivatele (nevyzaduje prihlaseni)
+//   - renderDefault() → vlastni profil prihlaseneho uzivatele se statistikami a editaci
 final class ProfilePresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -30,11 +28,9 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         $this->setLayout('layout');
     }
 
-    /**
-     * Zobrazí veřejný profil jiného uživatele.
-     * Přístupné bez přihlášení — pokud má uživatel privátní profil (is_public = 0),
-     * šablona zobrazí jen username a zprávu "profil je soukromý".
-     */
+    // Zobrazi verejny profil jineho uzivatele.
+    // Pristupne bez prihlaseni - pokud ma uzivatel privatni profil (is_public = 0),
+    // sablona zobrazi jen username a zpravu "profil je soukromy".
     public function renderView(int $id): void
     {
         $profile = $this->profileFacade->getPublicProfile($id);
@@ -44,11 +40,9 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         $this->template->profile = $profile;
     }
 
-    /**
-     * Zobrazí vlastní profil přihlášeného uživatele.
-     * Obsahuje statistiky, záložky, lajknutý obsah a editační formulář.
-     * Nepřihlášeného přesměruje na login.
-     */
+    // Zobrazi vlastni profil prihlaseneho uzivatele.
+    // Obsahuje statistiky, zalozky, lajknuty obsah a editacni formular.
+    // Neprihlaseneho presmeruje na login.
     public function renderDefault(): void
     {
         if (!$this->getUser()->isLoggedIn()) {
@@ -56,7 +50,7 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         }
 
         $userId = $this->getUser()->getId();
-        // Explorer::table() vrací Selection — lazy dotaz spuštěný až při přístupu k datům
+        // Explorer::table() vrati Selection - lazy dotaz spusteny az pri pristupu k datum
         $row = $this->database->table('users')->get($userId);
 
         $this->template->userData     = $row;
@@ -66,7 +60,7 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         $this->template->bookmarks     = $this->bookmarkFacade->getUserBookmarks($userId);
         $this->template->isPremium     = $this->premiumFacade->isPremium($userId);
 
-        // Předvyplní formulář aktuálními hodnotami uživatele
+        // predvyplni formular aktualnimi hodnotami uzivatele
         $this['editForm']->setDefaults([
             'first_name' => $row->first_name ?? '',
             'last_name'  => $row->last_name  ?? '',
@@ -76,11 +70,9 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         ]);
     }
 
-    /**
-     * Formulář pro úpravu profilu.
-     * Heslo je volitelné — vyplní se jen pokud ho uživatel chce změnit.
-     * Obsahuje checkbox is_public pro přepínání viditelnosti profilu.
-     */
+    // Formular pro upravu profilu.
+    // Heslo je volitelne - vyplni se jen pokud ho uzivatel chce zmenit.
+    // Obsahuje checkbox is_public pro prepinani viditelnosti profilu.
     protected function createComponentEditForm(): Form
     {
         $form = new Form;
@@ -99,14 +91,14 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
             ->setRequired(false)
             ->setOption('description', 'Vyplňte jen pokud chcete změnit heslo.');
 
-        // Potvrzení hesla je povinné pouze pokud bylo vyplněno pole "Nové heslo"
+        // potvrzeni hesla je povinne pouze pokud bylo vyplneno pole "Nove heslo"
         $form->addPassword('password_confirm', 'Potvrdit heslo:')
             ->setRequired(false)
             ->addConditionOn($form['password'], Form::Filled)
                 ->setRequired('Zadejte potvrzení hesla.')
                 ->addRule(Form::Equal, 'Hesla se neshodují.', $form['password']);
 
-        // Veřejný/soukromý profil — ovlivňuje co vidí ostatní uživatelé na Profile:view
+        // verejny/soukromy profil - ovlivnuje co vidi ostatni uzivatele na Profile:view
         $form->addCheckbox('is_public', 'Veřejný profil (ostatní uvidí moje údaje)');
 
         $form->addSubmit('send', 'Uložit změny');
@@ -114,10 +106,8 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         return $form;
     }
 
-    /**
-     * Zpracuje odeslání editačního formuláře.
-     * Výjimky DuplicateName/Email jsou chyceny a zobrazeny jako chyby přímo v políčku formuláře.
-     */
+    // Zpracuje odeslani editacniho formulare.
+    // Vyjimky DuplicateName/Email jsou chyceny a zobrazeny jako chyby primo v policku formulare.
     public function editFormSucceeded(Form $form, \stdClass $values): void
     {
         try {
