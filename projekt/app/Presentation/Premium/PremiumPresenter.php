@@ -26,7 +26,7 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         $this->template->plans = $this->cartFacade->getPlans();
         $this->template->currentCart = $this->cartFacade->getCart();
 
-        // pokud je uzivatel uz premium, zobrazime kdy mu vyprsí
+        // pokud je uzivatel uz premium, zobrazime kdy mu vyprsi
         $premiumUntil = null;
         if ($this->getUser()->isLoggedIn()) {
             $premiumUntil = $this->premiumFacade->getPremiumUntil($this->getUser()->getId());
@@ -45,7 +45,7 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Premium:cart');
     }
 
-    // Obsah kosiku.
+    // Obsah kosiku
     public function renderCart(): void
     {
         $this->template->cart = $this->cartFacade->getCart();

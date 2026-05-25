@@ -4,10 +4,6 @@ namespace App\Model\Admin;
 
 use Nette\Database\Explorer;
 
-// Fasada pro admin sekci - agreguje profil uzivatele a statistiky aktivity.
-// Pracuje primo s Explorer (ne pres repository), protoze potrebuje cross-table agregace
-// (SUM, COUNT pres vice tabulek) a SQL funkce jako DATE_FORMAT, ktere by
-// v repository pattern generovaly zbytecne mnoho dilcich dotazu.
 final class UserProfileFacade
 {
     public function __construct(

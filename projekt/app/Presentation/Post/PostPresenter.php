@@ -53,8 +53,6 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         $this->template->isBookmarked = $user->isLoggedIn()
             && $this->bookmarkFacade->isBookmarked($user->getId(), $id);
 
-        // komentare jsou pole stdClass objektu (ne ActiveRow) - fasada je obohacuje
-        // o username a email uzivatele pres JOIN, aby sablona nemusela delat JOIN rucne
         $this->template->comments = $this->commentFacade->getCommentsByPost($id);
 
         $userHasLiked = [];

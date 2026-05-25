@@ -12,8 +12,6 @@
 {block scripts}
     {include parent}
     <script>
-        // Simulace platební brány — přesměrování po 2 sekundách.
-        // $thankyouUrl je již json_encode()'ovaný řetězec z presenteru.
         setTimeout(() => {
             window.location.href = {$thankyouUrl|noescape};
         }, 2000);
