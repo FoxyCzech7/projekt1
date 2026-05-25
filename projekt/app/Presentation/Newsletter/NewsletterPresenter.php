@@ -2,11 +2,7 @@
 
 namespace App\Presentation\Newsletter;
 
-// Spravuje prihlaseni a odhlaseni odberu newsletteru.
-// Nema vlastni sablonu - kazda akce presmeruje zpet na Home.
-// Stav odberu se uklada do session sekce 'newsletter' (klic 'email'),
-// aby BasePresenter mohl zobrazit spravny stav v paticce bez DB dotazu.
-// Prihlaseni k odberu je povoleno pouze pro prihlasene uzivatele.
+// Spravuje prihlaseni a odhlaseni odberu newsletteru
 final class NewsletterPresenter extends \App\Presentation\BasePresenter
 {
     protected function startup(): void
@@ -16,7 +12,7 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
     }
 
     // Zpracuje formular z paticce (plain HTML POST, ne Nette Form).
-    // Validuje email, prihlas k odberu a ulozi do session.
+    // Validuje email, prihlas k odberu a ulozi do session
     public function actionSubscribe(): void
     {
         // newsletter je jen pro prihlasene uzivatele - neprihlaseneho presmerujeme na login
@@ -43,8 +39,8 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    // Zmeni email odberu: odhlas stary (ze session) a prihlas novy.
-    // Pokud v session neni stary email, rovnou prihlas novy.
+    // Zmeni email odberu: odhlas stary (ze session) a prihlas novy
+    // Pokud v session neni stary email, rovnou prihlas novy
     public function actionChange(): void
     {
         $newEmail = trim($this->getHttpRequest()->getPost('email', ''));
@@ -72,8 +68,8 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    // Odhlas email z odberu a vymaze ho ze session.
-    // Email prichazi jako URL parametr (z odkazu v paticce nebo z emailu).
+    // Odhlas email z odberu a vymaze ho ze session
+    // Email prichazi jako URL parametr (z odkazu v paticce nebo z emailu)
     public function actionUnsubscribe(string $email): void
     {
         $this->newsletterFacade->unsubscribe($email);
@@ -88,7 +84,7 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:default');
     }
 
-    // Admin akce - odesle newsletter o konkretnim prispevku vsem odberatelum.
+    // Admin akce - odesle newsletter o konkretnim prispevku vsem odberatelum
     // Dostupna pouze pro adminy.
     public function actionSend(int $postId): void
     {

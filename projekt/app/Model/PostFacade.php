@@ -10,8 +10,7 @@ use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\Selection;
 
 // Fasada pro operace s prispevky - orchestruje PostsRepository, LikesRepository,
-// RevisionRepository a NotificationFacade do jednoho verejneho API pro presentery.
-// Presentery nikdy nevolaji jednotliva repository primo.
+// RevisionRepository a NotificationFacade do jednoho verejneho API pro presentery
 final class PostFacade
 {
     public function __construct(
@@ -21,49 +20,49 @@ final class PostFacade
         private NotificationFacade $notificationFacade,
     ) {}
 
-    // Vrati vsechny verejne publikovane prispevky jako Selection (lazy dotaz).
+    // Vrati vsechny verejne publikovane prispevky jako Selection (lazy dotaz)
     public function getPublicArticles(): Selection
     {
         return $this->postsRepository->getPublicArticles();
     }
 
-    // Vrati jednu stranku publikovanych prispevku pro strankovani ($offset a $limit).
+    // Vrati jednu stranku publikovanych prispevku pro strankovani ($offset a $limit)
     public function getPublicArticlesPage(int $offset, int $limit): Selection
     {
         return $this->postsRepository->getPublicArticlesPage($offset, $limit);
     }
 
-    // Vrati celkovy pocet publikovanych prispevku - potrebne pro vypocet poctu stranek.
+    // Vrati celkovy pocet publikovanych prispevku - potrebne pro vypocet poctu stranek
     public function getPublicArticlesCount(): int
     {
         return $this->postsRepository->getPublicArticlesCount();
     }
 
-    // Najde prispevek podle ID, nebo vrati null.
+    // Najde prispevek podle ID, nebo vrati null
     public function findById(int $id): ?ActiveRow
     {
         return $this->postsRepository->findById($id);
     }
 
-    // Najde prispevek podle presneho nazvu - pouziva se pro detekci duplikatu pri importu.
+    // Najde prispevek podle presneho nazvu - pouziva se pro detekci duplikatu pri importu
     public function findByTitle(string $title): ?ActiveRow
     {
         return $this->postsRepository->findByTitle($title);
     }
 
-    // Vrati rozpracovane prispevky (stav 'draft') daneho uzivatele.
+    // Vrati rozpracovane prispevky (stav 'draft') daneho uzivatele
     public function getUserDrafts(int $userId): Selection
     {
         return $this->postsRepository->getUserDrafts($userId);
     }
 
-    // Vrati prispevky s budoucim datem zverejneni - jsou published, ale jeste se nezobrazeji.
+    // Vrati prispevky s budoucim datem zverejneni - jsou published, ale jeste se nezobrazeji
     public function getUserScheduled(int $userId): array
     {
         return $this->postsRepository->getUserScheduled($userId);
     }
 
-    // Vytvori novy prispevek; $scheduledAt prepise created_at pro planovane zverejneni.
+    // Vytvori novy prispevek; $scheduledAt prepise created_at pro planovane zverejneni
     public function createPost(
         string $title, string $content, int $userId,
         ?string $image = null, bool $isPremium = false,
@@ -72,7 +71,7 @@ final class PostFacade
         return $this->postsRepository->createPost($title, $content, $userId, $image, $isPremium, $status, $scheduledAt);
     }
 
-    // Aktualizuje prispevek; pokud je zadan $editedBy, pred prepisanim ulozi revizi.
+    // Aktualizuje prispevek; pokud je zadan $editedBy, pred prepisanim ulozi revizi
     public function updatePost(
         int $id, string $title, string $content,
         ?string $image = null, ?bool $isPremium = null,
@@ -89,7 +88,7 @@ final class PostFacade
         $this->postsRepository->updatePost($id, $title, $content, $image, $isPremium, $status, $scheduledAt);
     }
 
-    // Aktualizuje obsah prispevku a vzdy ulozi revizi (zjednodusene API pro EditPresenter).
+    // Aktualizuje obsah prispevku a vzdy ulozi revizi (zjednodusene API pro EditPresenter)
     public function updatePostContent(int $id, string $title, string $content, int $editedBy): void
     {
         $post = $this->postsRepository->findById($id);
@@ -99,7 +98,7 @@ final class PostFacade
         }
     }
 
-    // Smaze prispevek podle ID - kaskadni smazani zavislych zaznamu resi DB nebo UserProfileFacade.
+    // Smaze prispevek podle ID - kaskadni smazani zavislych zaznamu resi DB nebo UserProfileFacade
     public function deletePost(int $id): void
     {
         $this->postsRepository->delete($id);
@@ -111,7 +110,7 @@ final class PostFacade
         $this->postsRepository->incrementViews($id);
     }
 
-    // Odhaduje dobu cteni v minutach - pocita se rychlosti 200 slov/min, minimum 1 minuta.
+    // Odhaduje dobu cteni v minutach - pocita se rychlosti 200 slov/min, minimum 1 minuta
     public static function readingTime(string $content): int
     {
         $words = preg_split('/\s+/', trim(strip_tags($content)), -1, PREG_SPLIT_NO_EMPTY);
@@ -124,7 +123,7 @@ final class PostFacade
         return $this->revisionRepository->getByPost($postId);
     }
 
-    // Prida nebo odebere lajk; notifikuje autora prispevku pokud neni lajkujici sam autor.
+    // Prida nebo odebere lajk; notifikuje autora prispevku pokud neni lajkujici sam autor
     public function toggleLike(int $postId, int $userId): void
     {
         $like = $this->likesRepository->findByUserAndPost($userId, $postId);
@@ -150,7 +149,7 @@ final class PostFacade
         }
     }
 
-    // Vrati mnozinu ID prispevku, ktere dany uzivatel lajknul - pro zobrazeni stavu tlacitka.
+    // Vrati mnozinu ID prispevku, ktere dany uzivatel lajknul - pro zobrazeni stavu tlacitka
     public function getUserLikedPostIds(int $userId, array $postIds): array
     {
         return $this->likesRepository->getUserLikedPostIds($userId, $postIds);

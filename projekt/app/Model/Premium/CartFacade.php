@@ -4,9 +4,7 @@ namespace App\Model\Premium;
 
 use Nette\Http\Session;
 
-// Nakupni kosik implementovany pres Nette Sessions.
-// Kosik obsahuje vzdy nejvyse jeden plan (predplatne nelze kombinovat).
-// Data preziji request diky session, ale ne prihlaseni jineho uzivatele.
+// Nakupni kosik implementovany pres Nette Sessions
 final class CartFacade
 {
     private const SECTION = 'premium_cart';
@@ -23,20 +21,20 @@ final class CartFacade
         private Session $session,
     ) {}
 
-    // Vrati vsechny dostupne plany.
+    // Vrati vsechny dostupne plany
     public function getPlans(): array
     {
         return self::PLANS;
     }
 
-    // Vrati jeden plan podle ID, nebo null pokud neexistuje.
+    // Vrati jeden plan podle ID, nebo null pokud neexistuje
     public function getPlanById(int $id): ?array
     {
         return self::PLANS[$id] ?? null;
     }
 
-    // Ulozi vybrany plan do kosiku.
-    // Prepise predchozi vyber - v kosiku je vzdy jen jeden plan.
+    // Ulozi vybrany plan do kosiku
+    // Prepise predchozi vyber - v kosiku je vzdy jen jeden plan
     public function addToCart(int $planId): void
     {
         $plan = $this->getPlanById($planId);
@@ -46,13 +44,13 @@ final class CartFacade
         $this->session->getSection(self::SECTION)->plan = $plan;
     }
 
-    // Vrati aktualne vybrany plan, nebo null pokud je kosik prazdny.
+    // Vrati aktualne vybrany plan, nebo null pokud je kosik prazdny
     public function getCart(): ?array
     {
         return $this->session->getSection(self::SECTION)->plan ?? null;
     }
 
-    // Vyprazdni kosik (po dokonceni platby).
+    // Vyprazdni kosik (po dokonceni platby)
     public function clearCart(): void
     {
         $this->session->getSection(self::SECTION)->remove();

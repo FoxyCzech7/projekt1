@@ -4,8 +4,8 @@ namespace App\Model\Posts;
 
 use App\Model\BaseRepository;
 
-// Repository pro tabulku 'post_revisions' - uklada historii zmen prispevku.
-// Revize se vytvari vzdy pred prepisanim prispevku, aby sel obsah obnovit.
+// Repository pro tabulku 'post_revisions' - uklada historii zmen prispevku
+// Revize se vytvari vzdy pred prepisanim prispevku, aby sel obsah obnovit
 class RevisionRepository extends BaseRepository
 {
     protected function getTableName(): string
@@ -13,7 +13,7 @@ class RevisionRepository extends BaseRepository
         return 'post_revisions';
     }
 
-    // Ulozi snimek prispevku pred jeho upravou - zachova puvodni titulek, obsah a editora.
+    // Ulozi snimek prispevku pred jeho upravou - zachova puvodni titulek, obsah a editora
     public function saveRevision(int $postId, string $title, string $content, int $editedBy): void
     {
         $this->getTable()->insert([
@@ -25,7 +25,7 @@ class RevisionRepository extends BaseRepository
         ]);
     }
 
-    // Vrati vsechny revize daneho prispevku serazene od nejnovejsi - pro zobrazeni historie.
+    // Vrati vsechny revize daneho prispevku serazene od nejnovejsi - pro zobrazeni historie
     public function getByPost(int $postId): array
     {
         return $this->getTable()

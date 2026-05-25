@@ -18,7 +18,7 @@ final class LandingPresenter extends Presenter
 
     public function renderDefault(): void
     {
-        // sablona podle toho zobrazi bud "Prihlasit/Registrovat" nebo "Muj profil"
+        // sablona podle toho zobrazi bud Prihlasit/Registrovat nebo Muj profil
         $this->template->isLoggedIn = $this->getUser()->isLoggedIn();
     }
 }

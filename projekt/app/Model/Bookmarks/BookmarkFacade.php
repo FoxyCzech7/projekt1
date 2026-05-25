@@ -4,14 +4,12 @@ namespace App\Model\Bookmarks;
 
 use Nette\Database\Explorer;
 
-// Fasada pro spravu zalozek - uzivatel si muze ulozit prispevky pro pozdejsi cteni.
-// Pracuje primo s Explorer (bez repository vrstvy), protoze operace jsou jednoduche a prime.
+// Fasada pro spravu zalozek - uzivatel si muze ulozit prispevky pro pozdejsi cteni
 final class BookmarkFacade
 {
     public function __construct(private Explorer $database) {}
 
-    // Prida zalozku pokud neexistuje, nebo ji odebere pokud existuje (toggle chovani).
-    // Vrati true = zalozka byla pridana, false = zalozka byla odebrara.
+    // Prida zalozku pokud neexistuje, nebo ji odebere pokud existuje (toggle chovani)
     public function toggle(int $userId, int $postId): bool
     {
         $row = $this->database->table('bookmarks')
@@ -30,15 +28,14 @@ final class BookmarkFacade
         return true;
     }
 
-    // Zjisti, zda ma dany uzivatel prispevek v zalozKach - pro zobrazeni stavu tlacitka.
+    // Zjisti, zda ma dany uzivatel prispevek v zalozKach - pro zobrazeni stavu tlacitka
     public function isBookmarked(int $userId, int $postId): bool
     {
         return (bool) $this->database->table('bookmarks')
             ->where('user_id', $userId)->where('post_id', $postId)->fetch();
     }
 
-    // Vrati zalozky uzivatele s daty prispevku pres SQL JOIN, serazene od nejnovejsi zalozky.
-    // bookmarked_at alias odlisuje datum zalozky od data vytvoreni prispevku (created_at).
+    // Vrati zalozky uzivatele s daty prispevku pres SQL JOIN, serazene od nejnovejsi zalozky
     public function getUserBookmarks(int $userId): array
     {
         return $this->database->query(

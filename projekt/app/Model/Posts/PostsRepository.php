@@ -6,8 +6,8 @@ use App\Model\BaseRepository;
 use Nette\Database\Table\Selection;
 use Nette\Database\Table\ActiveRow;
 
-// Repository pro tabulku 'posts' - zapouzdřuje vsechny DB dotazy tykajici se prispevku.
-// Logika jako notifikace nebo revize patri do PostFacade, ne sem.
+// Repository pro tabulku 'posts' - zapouzdřuje vsechny DB dotazy tykajici se prispevku
+// Logika jako notifikace nebo revize patri do PostFacade, ne sem
 class PostsRepository extends BaseRepository
 {
     protected function getTableName(): string
@@ -15,8 +15,8 @@ class PostsRepository extends BaseRepository
         return 'posts';
     }
 
-    // Vrati vsechny verejne prispevky (status=published, created_at v minulosti) serazene od nejnovejsiho.
-    // Podminka created_at < NOW() zajistuje, ze planovane prispevky se jeste nezobrazi.
+    // Vrati vsechny verejne prispevky (status=published, created_at v minulosti) serazene od nejnovejsiho
+    // Podminka created_at < NOW() zajistuje, ze planovane prispevky se jeste nezobrazi
     public function getPublicArticles(): Selection
     {
         return $this->findAll()
@@ -26,7 +26,7 @@ class PostsRepository extends BaseRepository
             ->order('created_at DESC');
     }
 
-    // Vrati jednu stranku verejnych prispevku - pouziva se pro strankovani na homepage.
+    // Vrati jednu stranku verejnych prispevku - pouziva se pro strankovani na homepage
     public function getPublicArticlesPage(int $offset, int $limit): Selection
     {
         return $this->findAll()
@@ -37,7 +37,7 @@ class PostsRepository extends BaseRepository
             ->limit($limit, $offset);
     }
 
-    // Vrati celkovy pocet publikovanych prispevku pro vypocet stranek v Paginator.
+    // Vrati celkovy pocet publikovanych prispevku pro vypocet stranek v Paginator
     public function getPublicArticlesCount(): int
     {
         return $this->findAll()
@@ -46,7 +46,7 @@ class PostsRepository extends BaseRepository
             ->count('*');
     }
 
-    // Vrati koncepty (status='draft') daneho uzivatele serazene od nejnovejsiho.
+    // Vrati koncepty (status='draft') daneho uzivatele serazene od nejnovejsiho
     public function getUserDrafts(int $userId): Selection
     {
         return $this->getTable()
@@ -55,8 +55,7 @@ class PostsRepository extends BaseRepository
             ->order('created_at DESC');
     }
 
-    // Vrati planovane prispevky - maji status 'published', ale created_at je v budoucnosti.
-    // fetchAll() vrati pole, ne Selection, protoze caller potrebuje iterovat dvakrat.
+    // Vrati planovane prispevky - maji status 'published', ale created_at je v budoucnosti
     public function getUserScheduled(int $userId): array
     {
         return $this->getTable()
@@ -67,19 +66,19 @@ class PostsRepository extends BaseRepository
             ->fetchAll();
     }
 
-    // Najde prispevek podle primarniho klice.
+    // Najde prispevek podle primarniho klice
     public function findById(int $id): ?ActiveRow
     {
         return $this->getTable()->get($id);
     }
 
-    // Prepise findAll() z BaseRepository - prida vychozi razeni od nejnovejsiho.
+    // Prepise findAll() z BaseRepository - prida vychozi razeni od nejnovejsiho
     public function findAll(): Selection
     {
         return $this->getTable()->order('created_at DESC');
     }
 
-    // Vytvori novy prispevek; pokud je zadan $scheduledAt, pouzije se jako datum zverejneni.
+    // Vytvori novy prispevek; pokud je zadan $scheduledAt, pouzije se jako datum zverejneni
     public function createPost(
         string $title, string $content, int $userId,
         ?string $image = null, bool $isPremium = false,
@@ -100,7 +99,7 @@ class PostsRepository extends BaseRepository
         ]);
     }
 
-    // Aktualizuje prispevek; null parametry se ignoruji - aktualizuji se jen predane hodnoty.
+    // Aktualizuje prispevek; null parametry se ignoruji - aktualizuji se jen predane hodnoty
     public function updatePost(
         int $id, string $title, string $content,
         ?string $image = null, ?bool $isPremium = null,
@@ -115,25 +114,25 @@ class PostsRepository extends BaseRepository
         $this->getTable()->where('id', $id)->update($data);
     }
 
-    // Najde prispevek podle presneho nazvu - pro detekci duplikatu pri RSS importu.
+    // Najde prispevek podle presneho nazvu - pro detekci duplikatu pri RSS importu
     public function findByTitle(string $title): ?ActiveRow
     {
         return $this->getTable()->where('title', $title)->fetch();
     }
 
-    // Zvysi pocitadlo zobrazeni o 1 pomoci SQL += (atomicka operace, bez race condition).
+    // Zvysi pocitadlo zobrazeni o 1 pomoci SQL += (atomicka operace, bez race condition)
     public function incrementViews(int $id): void
     {
         $this->getTable()->where('id', $id)->update(['views+=' => 1]);
     }
 
-    // Zvysi pocitadlo lajku o 1 - volano z PostFacade::toggleLike().
+    // Zvysi pocitadlo lajku o 1 - volano z PostFacade::toggleLike()
     public function incrementLikes(int $id): void
     {
         $this->getTable()->where('id', $id)->update(['likes_count+=' => 1]);
     }
 
-    // Snizi pocitadlo lajku o 1 - volano z PostFacade::toggleLike() pri odebirani lajku.
+    // Snizi pocitadlo lajku o 1 - volano z PostFacade::toggleLike() pri odebirani lajku
     public function decrementLikes(int $id): void
     {
         $this->getTable()->where('id', $id)->update(['likes_count-=' => 1]);

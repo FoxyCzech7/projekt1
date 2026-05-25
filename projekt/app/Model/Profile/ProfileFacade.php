@@ -8,10 +8,10 @@ use Nette\Database\Explorer;
 use Nette\Security\Passwords;
 
 // Fasada pro profil prihlaseneho uzivatele.
-// Statistiky, lajknuty obsah, uprava vlastnich udaju a nacitani cizich profilu.
+// Statistiky, lajknuty obsah, uprava vlastnich udaju a nacitani cizich profilu
 // Pracuje primo s Explorer (ne pres repository) protoze potrebuje
 // cross-table dotazy (JOIN, agregace) ktere by v repository pattern
-// generovaly zbytecne mnoho dilcich dotazu.
+// generovaly zbytecne mnoho dilcich dotazu
 final class ProfileFacade
 {
     public function __construct(
@@ -19,8 +19,8 @@ final class ProfileFacade
         private Passwords $passwords,
     ) {}
 
-    // Vrati agregovane statistiky uzivatele - pocty prispevku, komentaru a prijatych lajku.
-    // Jeden SQL dotaz s poddotazy misto 4 separatnich dotazu.
+    // Vrati agregovane statistiky uzivatele - pocty prispevku, komentaru a prijatych lajku
+    // Jeden SQL dotaz s poddotazy misto 4 separatnich dotazu
     public function getStats(int $userId): array
     {
         return (array) $this->database->query(
@@ -33,8 +33,8 @@ final class ProfileFacade
         )->fetch();
     }
 
-    // Vrati prispevky, ktere uzivatel lajknul.
-    // Serazene od nejnovejsiho - JOIN pres tabulku likes.
+    // Vrati prispevky, ktere uzivatel lajknul
+    // Serazene od nejnovejsiho - JOIN pres tabulku likes
     public function getLikedPosts(int $userId): array
     {
         return $this->database->query(
@@ -47,7 +47,7 @@ final class ProfileFacade
         )->fetchAll();
     }
 
-    // Vrati komentare, ktere uzivatel lajknul, vcetne nazvu prislusneho prispevku.
+    // Vrati komentare, ktere uzivatel lajknul, vcetne nazvu prislusneho prispevku
     public function getLikedComments(int $userId): array
     {
         return $this->database->query(
@@ -62,10 +62,10 @@ final class ProfileFacade
         )->fetchAll();
     }
 
-    // Vrati zakladni verejne informace o uzivateli pro zobrazeni ciziho profilu.
-    // Vrati null pokud uzivatel s danym ID neexistuje.
+    // Vrati zakladni verejne informace o uzivateli pro zobrazeni ciziho profilu
+    // Vrati null pokud uzivatel s danym ID neexistuje
     // Pole is_public urcuje, zda sablona zobrazi plny profil nebo jen username
-    // s hlaskou "profil je soukromy".
+    // s hlaskou "profil je soukromy"
     public function getPublicProfile(int $userId): ?object
     {
         $user = $this->database->table('users')->get($userId);
@@ -82,10 +82,10 @@ final class ProfileFacade
         ];
     }
 
-    // Aktualizuje profil prihlaseneho uzivatele.
-    // Heslo se prehashuje a ulozi jen pokud bylo vyplneno (neprazdny retezec).
-    // Hazi DuplicateNameException pokud username uz pouziva jiny uzivatel.
-    // Hazi DuplicateEmailException pokud email uz pouziva jiny uzivatel.
+    // Aktualizuje profil prihlaseneho uzivatele
+    // Heslo se prehashuje a ulozi jen pokud bylo vyplneno (neprazdny retezec)
+    // Hazi DuplicateNameException pokud username uz pouziva jiny uzivatel
+    // Hazi DuplicateEmailException pokud email uz pouziva jiny uzivatel
     public function updateProfile(int $userId, string $username, string $email,
         string $firstName, string $lastName, string $password, bool $isPublic = true): void
     {

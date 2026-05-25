@@ -41,7 +41,7 @@ final class FeedImportFacade
     // Navratove hodnoty:
     //   'created'   - prispevek byl uspesne vytvoren
     //   'duplicate' - prispevek se stejnym nazvem uz existuje
-    // Hazi RuntimeException pokud feed neni dostupny.
+    // Hazi RuntimeException pokud feed neni dostupny
     public function importLatestPost(int $authorUserId, string $uploadsDir): string
     {
         $item = $this->getLatestFeedItem();
@@ -124,8 +124,8 @@ final class FeedImportFacade
         ];
     }
 
-    // Scraping HTML stranky - pouzije se kdyz RSS feed neexistuje.
-    // Najde prvni clanek na listingove strance, pak stahne jeho plny obsah.
+    // Scraping HTML stranky - pouzije se kdyz RSS feed neexistuje
+    // Najde prvni clanek na listingove strance, pak stahne jeho plny obsah
     private function scrapeHtmlListing(string $html, string $baseUrl): array
     {
         $parsed = parse_url($baseUrl);

@@ -6,8 +6,8 @@ use App\Model\Admin\UserProfileFacade;
 use App\Model\Feed\FeedImportFacade;
 use Nette\Application\UI\Presenter;
 
-// Admin sekce - prehled uzivatelu a jejich profily.
-// Pristupny pouze pro roli 'admin'.
+// Admin sekce - prehled uzivatelu a jejich profily
+// Pristupny pouze pro roli 'admin'
 final class AdminPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -26,8 +26,8 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
         }
     }
 
-    // Stahne nejnovejsi polozku z RSS feedu a vytvori z ni prispevek.
-    // Autorem je prihlaseny admin. Cache feedu se po importu vymaze.
+    // Stahne nejnovejsi polozku z RSS feedu a vytvori z ni prispevek
+    // Autorem je prihlaseny admin. Cache feedu se po importu vymaze
     public function actionImportFeed(): void
     {
         $uploadsDir = __DIR__ . '/../../../www/img/posts/';
@@ -52,8 +52,8 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
         $this->template->users = $this->userProfileFacade->getAllUsers();
     }
 
-    // Smaze uzivatele i vsechna jeho data.
-    // Admin nemuze smazat sam sebe.
+    // Smaze uzivatele i vsechna jeho data
+    // Admin nemuze smazat sam sebe
     public function actionDelete(int $id): void
     {
         if ($id === $this->getUser()->getId()) {
@@ -73,7 +73,7 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Admin:default');
     }
 
-    // Profil konkretniho uzivatele s grafy aktivity.
+    // Profil konkretniho uzivatele s grafy aktivity
     public function renderProfile(int $id): void
     {
         $profile = $this->userProfileFacade->getUserProfile($id);

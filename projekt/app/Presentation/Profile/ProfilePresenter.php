@@ -11,8 +11,8 @@ use Nette\Application\UI\Form;
 use Nette\Database\Explorer;
 
 // Spravuje dva typy profilu:
-//   - renderView()    → verejny profil libovolneho uzivatele (nevyzaduje prihlaseni)
-//   - renderDefault() → vlastni profil prihlaseneho uzivatele se statistikami a editaci
+//   - renderView() - verejny profil libovolneho uzivatele (nevyzaduje prihlaseni)
+//   - renderDefault() - vlastni profil prihlaseneho uzivatele se statistikami a editaci
 final class ProfilePresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -28,9 +28,9 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         $this->setLayout('layout');
     }
 
-    // Zobrazi verejny profil jineho uzivatele.
+    // Zobrazi verejny profil jineho uzivatele
     // Pristupne bez prihlaseni - pokud ma uzivatel privatni profil (is_public = 0),
-    // sablona zobrazi jen username a zpravu "profil je soukromy".
+    // sablona zobrazi jen username a zpravu "profil je soukromy"
     public function renderView(int $id): void
     {
         $profile = $this->profileFacade->getPublicProfile($id);
@@ -40,9 +40,9 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         $this->template->profile = $profile;
     }
 
-    // Zobrazi vlastni profil prihlaseneho uzivatele.
-    // Obsahuje statistiky, zalozky, lajknuty obsah a editacni formular.
-    // Neprihlaseneho presmeruje na login.
+    // Zobrazi vlastni profil prihlaseneho uzivatele
+    // Obsahuje statistiky, zalozky, lajknuty obsah a editacni formular
+    // Neprihlaseneho presmeruje na login
     public function renderDefault(): void
     {
         if (!$this->getUser()->isLoggedIn()) {
@@ -70,9 +70,9 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         ]);
     }
 
-    // Formular pro upravu profilu.
-    // Heslo je volitelne - vyplni se jen pokud ho uzivatel chce zmenit.
-    // Obsahuje checkbox is_public pro prepinani viditelnosti profilu.
+    // Formular pro upravu profilu
+    // Heslo je volitelne - vyplni se jen pokud ho uzivatel chce zmenit
+    // Obsahuje checkbox is_public pro prepinani viditelnosti profilu
     protected function createComponentEditForm(): Form
     {
         $form = new Form;
@@ -106,8 +106,8 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         return $form;
     }
 
-    // Zpracuje odeslani editacniho formulare.
-    // Vyjimky DuplicateName/Email jsou chyceny a zobrazeny jako chyby primo v policku formulare.
+    // Zpracuje odeslani editacniho formulare
+    // Vyjimky DuplicateName/Email jsou chyceny a zobrazeny jako chyby primo v policku formulare
     public function editFormSucceeded(Form $form, \stdClass $values): void
     {
         try {

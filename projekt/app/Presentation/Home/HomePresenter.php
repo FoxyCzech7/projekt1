@@ -8,7 +8,7 @@ use Nette\Application\UI\Presenter;
 use Nette\Utils\Paginator;
 
 // Zobrazuje seznam prispevku se strankovani.
-// Deleguje veskrou praci s daty na PostFacade - sam nevi nic o DB.
+// Deleguje veskrou praci s daty na PostFacade - sam nevi nic o DB
 final class HomePresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(

@@ -9,8 +9,8 @@ use App\Model\Premium\PremiumFacade;
 use App\Model\Tags\TagFacade;
 use Nette\Security\Authorizator;
 
-// Formular pro vytvoreni a editaci prispevku.
-// Pristup povolen jen prihlasenym autorum a adminům.
+// Formular pro vytvoreni a editaci prispevku
+// Pristup povolen jen prihlasenym autorum a adminům
 final class PostFormPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
@@ -81,9 +81,7 @@ final class PostFormPresenter extends \App\Presentation\BasePresenter
         $form->addTextArea('content', 'Obsah:')
             ->setRequired('Zadejte prosím obsah příspěvku.');
 
-        // checkbox zobrazime jen uzivatelum, kteri sami maji aktivni premium nebo jsou admin.
-        // server-side guard v postFormSucceeded() pak ignoruje is_premium=true od ostatnich,
-        // takze podvrzeny POST request taky nezabere.
+        // checkbox zobrazime jen uzivatelum, kteri sami maji aktivni premium nebo jsou admini - ostatni by mohli nastavit is_premium, ale nemeli by smysl, protoze by jim premium obsah zustal skryty
         if ($this->canCreatePremiumPost()) {
             $form->addCheckbox('is_premium', 'Prémiový příspěvek')
                 ->setOption('description', 'Obsah uvidí pouze prémiové uživatelé.');

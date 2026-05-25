@@ -84,25 +84,17 @@ final class UserProfileFacade
             ->fetchAll();
     }
 
-    // Smaze uzivatele vcetne vsech jeho dat v transakci - bud se smaze vse, nebo nic.
-    // Poradi mazani respektuje FK zavislosti (cizi klice):
-    //   1. comment_likes na komentarích tohoto uzivatele (jini lajknuli jeho komentare)
-    //   2. likes na prispëvcich tohoto uzivatele (jini lajknuli jeho prispevky)
-    //   3. comment_likes ktere sam udelil
-    //   4. likes ktere sam udelil
-    //   5. komentare uzivatele
-    //   6. prispevky uzivatele
-    //   7. samotny uzivatel
+    // Smaze uzivatele vcetne vsech jeho dat (prispevky, komentare, lajky)
     public function deleteUser(int $userId): void
     {
         $this->database->beginTransaction();
         try {
-            // sesbíráme ID komentaru a prispevku - potrebujeme je pro mazani cizich lajku
+            // sesbíráme ID komentaru a prispevku pro mazani cizich like
             $commentIds = $this->database->table('comments')
                 ->where('user_id', $userId)
                 ->fetchPairs('id', 'id');
             if ($commentIds) {
-                // smaze lajky, ktere jini uzivatele dali na komentare tohoto uzivatele
+                // smaze likes, ktere jini uzivatele dali na komentare tohoto uzivatele
                 $this->database->table('comment_likes')
                     ->where('comment_id', $commentIds)
                     ->delete();
@@ -112,17 +104,17 @@ final class UserProfileFacade
                 ->where('user_id', $userId)
                 ->fetchPairs('id', 'id');
             if ($postIds) {
-                // smaze lajky, ktere jini uzivatele dali na prispevky tohoto uzivatele
+                // smaze likes, ktere jini uzivatele dali na prispevky tohoto uzivatele
                 $this->database->table('likes')
                     ->where('post_id', $postIds)
                     ->delete();
             }
 
-            // smaze lajky, ktere tento uzivatel sam dal ostatnim
+            // smaze likes, ktere tento uzivatel sam dal ostatnim
             $this->database->table('comment_likes')->where('user_id', $userId)->delete();
             $this->database->table('likes')->where('user_id', $userId)->delete();
 
-            // smaze obsah uzivatele - komentare a prispevky
+            // smaze obsah uzivatele (komentare a prispevky)
             $this->database->table('comments')->where('user_id', $userId)->delete();
             $this->database->table('posts')->where('user_id', $userId)->delete();
 
@@ -131,7 +123,7 @@ final class UserProfileFacade
 
             $this->database->commit();
         } catch (\Throwable $e) {
-            // pokud cokoli selze, vratime DB do puvodnniho stavu
+            // pokud cokoli selze, vrati se DB do puvodnniho stavu
             $this->database->rollBack();
             throw $e;
         }

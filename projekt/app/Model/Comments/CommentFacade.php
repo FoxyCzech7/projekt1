@@ -16,21 +16,18 @@ final class CommentFacade
         private NotificationFacade $notificationFacade,
     ) {}
 
-    // Najde komentar podle ID, nebo vrati null.
+    // Najde komentar podle ID, nebo vrati null
     public function findById(int $id): ?ActiveRow
     {
         return $this->commentsRepository->findById($id);
     }
 
     // Vrati komentare prispevku jako strom objektu - kazdy uzel ma pole $children s odpovedi.
-    // Strom se sestavuje ve dvou pruchodech v PHP (ne rekurzivnim SQL), aby kod fungoval
-    // i na starsich verzich MariaDB bez podpory CTE (Common Table Expressions).
     public function getCommentsByPost(int $postId): array
     {
         $byId = [];
         $roots = [];
 
-        // JOIN dotaz nacte komentare i autory najednou - eliminuje N+1 problem oproti ref() v cyklu
         $rows = $this->commentsRepository->findByPostIdWithUsers($postId);
 
         // pruchod 1: vytvori stdClass uzly indexovane podle ID
@@ -64,8 +61,8 @@ final class CommentFacade
         return $roots;
     }
 
-    // Vlozi novy komentar nebo odpoved; $parentId = null znamena kořenovy komentar.
-    // $userId = null pro neprihlasene uzivatele - ti zadavaji jmeno a email rucne.
+    // Vlozi novy komentar nebo odpoved; $parentId = null znamena kořenovy komentar
+    // $userId = null pro neprihlasene uzivatele - ti zadavaji jmeno a email rucne
     public function addComment(
         int $postId,
         ?int $userId,
@@ -100,7 +97,7 @@ final class CommentFacade
         }
     }
 
-    // Smaze komentar podle ID - odpovedi zustanou v DB (osirují), DB CASCADE je neresi.
+    // Smaze komentar podle ID - odpovedi zustanou v DB (osirují), DB CASCADE je neresi
     public function deleteComment(int $id): void
     {
         $this->commentsRepository->delete($id);
