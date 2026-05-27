@@ -2,3 +2,4 @@ vendor/
 docker/volumes/
 temp/cache/
 log/*.log
+config/local.neon

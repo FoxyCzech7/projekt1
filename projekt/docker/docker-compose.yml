@@ -27,3 +27,10 @@ services:
     image: adminer:latest
     ports:
       - 8080:8080
+
+  mailpit:
+    container_name: 'mailpit'
+    image: axllent/mailpit:latest
+    ports:
+      - '8025:8025'  # web UI
+      - '1025:1025'  # SMTP

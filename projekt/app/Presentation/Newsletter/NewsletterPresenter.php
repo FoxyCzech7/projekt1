@@ -92,9 +92,7 @@ final class NewsletterPresenter extends \App\Presentation\BasePresenter
             $this->error('Přístup zamítnut.', 403);
         }
 
-        // baseUrl se preda do newsletteru pro sestaveni odkazu na clanek
-        $baseUrl = $this->getHttpRequest()->getUrl()->getBaseUrl();
-        $sent = $this->newsletterFacade->sendNewPost($postId, rtrim($baseUrl, '/'));
+        $sent = $this->newsletterFacade->sendNewPost($postId);
         $this->flashMessage("Newsletter odeslán {$sent} odběratelům.", 'success');
         $this->redirect('Admin:default');
     }

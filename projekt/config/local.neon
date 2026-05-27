@@ -5,3 +5,12 @@ database:
     dsn: 'mysql:host=mariadb;dbname=quickstart'
     user: root
     password: '123456'
+
+
+mail:
+    smtp: true
+    host: smtp.gmail.com
+    port: 465
+    username: 'foxyczech8@gmail.com'
+    password: 'yhyf mmac kslq yzat'
+    secure: ssl

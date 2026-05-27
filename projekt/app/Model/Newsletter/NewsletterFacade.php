@@ -3,6 +3,7 @@
 namespace App\Model\Newsletter;
 
 use Nette\Database\Explorer;
+use Nette\Http\IRequest;
 use Nette\Mail\Mailer;
 use Nette\Mail\Message;
 
@@ -11,6 +12,7 @@ final class NewsletterFacade
     public function __construct(
         private Explorer $database,
         private Mailer $mailer,
+        private IRequest $httpRequest,
     ) {}
 
     // Prihlas email k odberu. Hazi vyjimku pokud email uz existuje
@@ -42,8 +44,9 @@ final class NewsletterFacade
 
     // Odesle newsletter o novem prispevku vsem odberatelum
     // Vrati pocet odeslanych emailu
-    public function sendNewPost(int $postId, string $baseUrl): int
+    public function sendNewPost(int $postId): int
     {
+        $baseUrl = rtrim($this->httpRequest->getUrl()->getBaseUrl(), '/');
         $post = $this->database->table('posts')->get($postId);
         if (!$post) {
             throw new \RuntimeException('Příspěvek nenalezen.');

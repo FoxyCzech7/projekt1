@@ -3,6 +3,7 @@
 namespace App\Model;
 
 use App\Model\Likes\LikesRepository;
+use App\Model\Newsletter\NewsletterFacade;
 use App\Model\Notifications\NotificationFacade;
 use App\Model\Posts\PostsRepository;
 use App\Model\Posts\RevisionRepository;
@@ -18,6 +19,7 @@ final class PostFacade
         private LikesRepository $likesRepository,
         private RevisionRepository $revisionRepository,
         private NotificationFacade $notificationFacade,
+        private NewsletterFacade $newsletterFacade,
     ) {}
 
     // Vrati vsechny verejne publikovane prispevky jako Selection (lazy dotaz)
@@ -63,12 +65,25 @@ final class PostFacade
     }
 
     // Vytvori novy prispevek; $scheduledAt prepise created_at pro planovane zverejneni
+    // Po vytvoreni okamzite odesle newsletter, pokud je prispevek publikovany (ne draft ani naplanovany do budoucna)
     public function createPost(
         string $title, string $content, int $userId,
         ?string $image = null, bool $isPremium = false,
         string $status = 'published', ?\DateTimeInterface $scheduledAt = null,
     ): ActiveRow {
-        return $this->postsRepository->createPost($title, $content, $userId, $image, $isPremium, $status, $scheduledAt);
+        $post = $this->postsRepository->createPost($title, $content, $userId, $image, $isPremium, $status, $scheduledAt);
+
+        $isPublishedNow = $status === 'published'
+            && ($scheduledAt === null || $scheduledAt <= new \DateTimeImmutable());
+        if ($isPublishedNow) {
+            try {
+                $this->newsletterFacade->sendNewPost($post->id);
+            } catch (\Exception) {
+                // selhani newsletteru nezastavi vytvoreni prispevku
+            }
+        }
+
+        return $post;
     }
 
     // Aktualizuje prispevek; pokud je zadan $editedBy, pred prepisanim ulozi revizi
