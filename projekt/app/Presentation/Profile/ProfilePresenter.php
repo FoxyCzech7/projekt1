@@ -2,12 +2,11 @@
 
 namespace App\Presentation\Profile;
 
-use App\Model\Auth\DuplicateEmailException;
-use App\Model\Auth\DuplicateNameException;
+use App\Components\ProfileEditForm\IProfileEditFormControlFactory;
+use App\Components\ProfileEditForm\ProfileEditFormControl;
 use App\Model\Bookmarks\BookmarkFacade;
 use App\Model\Premium\PremiumFacade;
 use App\Model\Profile\ProfileFacade;
-use Nette\Application\UI\Form;
 use Nette\Database\Explorer;
 
 // Spravuje dva typy profilu:
@@ -20,6 +19,7 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         private PremiumFacade $premiumFacade,
         private BookmarkFacade $bookmarkFacade,
         private Explorer $database,
+        private IProfileEditFormControlFactory $editFormFactory,
     ) {}
 
     protected function startup(): void
@@ -70,62 +70,8 @@ final class ProfilePresenter extends \App\Presentation\BasePresenter
         ]);
     }
 
-    // Formular pro upravu profilu
-    // Heslo je volitelne - vyplni se jen pokud ho uzivatel chce zmenit
-    // Obsahuje checkbox is_public pro prepinani viditelnosti profilu
-    protected function createComponentEditForm(): Form
+    protected function createComponentEditForm(): ProfileEditFormControl
     {
-        $form = new Form;
-
-        $form->addText('first_name', 'Jméno:');
-        $form->addText('last_name',  'Příjmení:');
-
-        $form->addText('username', 'Uživatelské jméno:')
-            ->setRequired('Zadejte uživatelské jméno.');
-
-        $form->addEmail('email', 'E-mail:')
-            ->setRequired('Zadejte e-mail.')
-            ->addRule(Form::EMAIL, 'Neplatný formát e-mailu.');
-
-        $form->addPassword('password', 'Nové heslo:')
-            ->setRequired(false)
-            ->setOption('description', 'Vyplňte jen pokud chcete změnit heslo.');
-
-        // potvrzeni hesla je povinne pouze pokud bylo vyplneno pole "Nove heslo"
-        $form->addPassword('password_confirm', 'Potvrdit heslo:')
-            ->setRequired(false)
-            ->addConditionOn($form['password'], Form::Filled)
-                ->setRequired('Zadejte potvrzení hesla.')
-                ->addRule(Form::Equal, 'Hesla se neshodují.', $form['password']);
-
-        // verejny/soukromy profil - ovlivnuje co vidi ostatni uzivatele na Profile:view
-        $form->addCheckbox('is_public', 'Veřejný profil (ostatní uvidí moje údaje)');
-
-        $form->addSubmit('send', 'Uložit změny');
-        $form->onSuccess[] = [$this, 'editFormSucceeded'];
-        return $form;
-    }
-
-    // Zpracuje odeslani editacniho formulare
-    // Vyjimky DuplicateName/Email jsou chyceny a zobrazeny jako chyby primo v policku formulare
-    public function editFormSucceeded(Form $form, \stdClass $values): void
-    {
-        try {
-            $this->profileFacade->updateProfile(
-                $this->getUser()->getId(),
-                $values->username,
-                $values->email,
-                $values->first_name,
-                $values->last_name,
-                $values->password,
-                $values->is_public,
-            );
-            $this->flashMessage('Profil byl úspěšně aktualizován.', 'success');
-            $this->redirect('this');
-        } catch (DuplicateNameException) {
-            $form['username']->addError('Toto uživatelské jméno je již použito.');
-        } catch (DuplicateEmailException) {
-            $form['email']->addError('Tento email je již registrován.');
-        }
+        return $this->editFormFactory->create();
     }
 }

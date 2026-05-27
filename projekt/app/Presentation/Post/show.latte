@@ -135,22 +135,7 @@
         <button id="cancel-reply" type="button" class="cancel-reply">× Zrušit</button>
     </div>
 
-    {if $user->isInRole('user') || $user->isInRole('author') || $user->isInRole('admin')}
-        {form commentForm}
-            {* parent_id nastavuje JS; při přímém odeslání formuláře je 0 (kořenový) *}
-            {input parent_id}
-            <div class="form-group">
-                {label content /}
-                {input content}
-            </div>
-            {input send}
-        {/form}
-    {else}
-        <p class="comment-login-prompt">
-            Pro psaní komentářů se prosím
-            <a n:href="Sign:in">přihlaste</a> nebo <a n:href="Sign:register">zaregistrujte</a>.
-        </p>
-    {/if}
+    {control commentForm}
 </div>
 
 {block scripts}

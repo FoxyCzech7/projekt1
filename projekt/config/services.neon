@@ -7,6 +7,13 @@ services:
         factory: App\Model\Auth\MyAuthenticator
         autowired: self
 
+    - implement: App\Components\SignInForm\ISignInFormControlFactory
+    - implement: App\Components\RegisterForm\IRegisterFormControlFactory
+    - implement: App\Components\CommentForm\ICommentFormControlFactory
+    - implement: App\Components\PostForm\IPostFormControlFactory
+    - implement: App\Components\ProfileEditForm\IProfileEditFormControlFactory
+    - implement: App\Components\EditForm\IEditFormControlFactory
+
 
 search:
   -

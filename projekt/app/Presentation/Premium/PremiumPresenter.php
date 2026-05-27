@@ -72,9 +72,7 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         }
         $this->redirect('Premium:gateway');
     }
-
-    // Simulace platebni brany - zobrazi loading stranku a automaticky
-    // presmeruje na dekovaci stranku (simulace okamziteho schvaleni platby)
+    
     public function renderGateway(): void
     {
         if ($this->cartFacade->isEmpty()) {
@@ -85,9 +83,6 @@ final class PremiumPresenter extends \App\Presentation\BasePresenter
         $this->template->thankyouUrl = json_encode($this->link('Premium:thankyou'));
     }
 
-    // Dekovaci stranka - aktivuje premium a vymaze kosik
-    // Pokud je kosik prazdny (uzivatel refreshnul stranku), presmerujeme na plany
-    // Tim zajistime idempotenci - premium se neaktivuje dvakrat
     public function renderThankyou(): void
     {
         if (!$this->getUser()->isLoggedIn()) {

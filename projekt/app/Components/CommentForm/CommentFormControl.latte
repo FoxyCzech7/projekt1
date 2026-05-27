@@ -1,0 +1,15 @@
+{if $isLoggedIn}
+    {form form}
+        {input parent_id}
+        <div class="form-group">
+            {label content /}
+            {input content}
+        </div>
+        {input send}
+    {/form}
+{else}
+    <p class="comment-login-prompt">
+        Pro psaní komentářů se prosím
+        <a href="{$signInUrl|noescape}">přihlaste</a> nebo <a href="{$signRegisterUrl|noescape}">zaregistrujte</a>.
+    </p>
+{/if}

@@ -1,0 +1,35 @@
+{form form}
+    <div class="edit-form-grid">
+        <div class="form-group">
+            {label first_name /}
+            {input first_name}
+        </div>
+        <div class="form-group">
+            {label last_name /}
+            {input last_name}
+        </div>
+        <div class="form-group">
+            {label username /}
+            {input username}
+        </div>
+        <div class="form-group">
+            {label email /}
+            {input email}
+        </div>
+        <div class="form-group">
+            {label password /}
+            {input password}
+        </div>
+        <div class="form-group">
+            {label password_confirm /}
+            {input password_confirm}
+        </div>
+    </div>
+    <div class="form-group edit-form-checkbox">
+        {input is_public}
+        {label is_public /}
+    </div>
+    <div class="edit-form-submit">
+        {input send}
+    </div>
+{/form}

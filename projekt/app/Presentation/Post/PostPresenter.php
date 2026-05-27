@@ -2,8 +2,9 @@
 
 namespace App\Presentation\Post;
 
-use Nette;
 use Nette\Application\UI\Form;
+use App\Components\CommentForm\ICommentFormControlFactory;
+use App\Components\CommentForm\CommentFormControl;
 use App\Model\Bookmarks\BookmarkFacade;
 use App\Model\PostFacade;
 use App\Model\Comments\CommentFacade;
@@ -20,6 +21,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         private BookmarkFacade $bookmarkFacade,
         private TagFacade $tagFacade,
         private Authorizator $authorizator,
+        private ICommentFormControlFactory $commentFormFactory,
     ) {}
 
     public function renderDefault(): void
@@ -73,77 +75,10 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         $this->template->posts = $this->postFacade->getPublicArticles();
     }
 
-    protected function createComponentCommentForm(): Form
-    {
-        $form = new Form;
-        $user = $this->getUser();
-
-        // prihlaseni uzivatele nezadavaji jmeno ani email - berou se z jejich identity
-        if ($user->isLoggedIn()) {
-            $form->addTextArea('content', 'Komentář:')
-                ->setRequired('Zadejte prosím obsah komentáře.')
-                ->addRule(Form::MIN_LENGTH, 'Komentář musí mít alespoň %d znaků.', 5);
-        } else {
-            $form->addText('name', 'Autor:')
-                ->setRequired('Zadejte prosím vaše jméno.')
-                ->addRule(Form::MIN_LENGTH, 'Jméno musí mít alespoň %d znaků.', 2);
-
-            $form->addEmail('email', 'E-mail:')
-                ->setRequired('Zadejte prosím váš e-mail.');
-
-            $form->addTextArea('content', 'Komentář:')
-                ->setRequired('Zadejte prosím obsah komentáře.')
-                ->addRule(Form::MIN_LENGTH, 'Komentář musí mít alespoň %d znaků.', 5);
-        }
-        // parent_id = 0 znamena kořenovy komentar; JS ho nastavi pri kliknuti na "Odpovedet"
-        $form->addHidden('parent_id', '0');
-
-        $form->addSubmit('send', 'Přidat komentář');
-        $form->onSuccess[] = [$this, 'commentFormSucceeded'];
-        return $form;
-    }
-
-    public function commentFormSucceeded(Form $form, \stdClass $data): void
+    protected function createComponentCommentForm(): CommentFormControl
     {
         $postId = (int) $this->getParameter('id');
-        if (!$postId) {
-            $this->error('Neznámé ID příspěvku.');
-        }
-        if (!$this->isAllowed('comment', 'add')) {
-            $this->flashMessage('Nemáte oprávnění přidávat komentáře.', 'error');
-            $this->redirect('Post:show', $postId);
-        }
-
-        $user = $this->getUser();
-        if ($user->isLoggedIn()) {
-            // $identity->username funguje jako pristup pres getData()['username']
-            // diky magic __get v Nette\Security\Identity
-            $name = $user->getIdentity()->username ?? 'Anonym';
-            $email = '';
-            $userId = $user->getId();
-        } else {
-            $name = trim($data->name) ?: 'Anonym';
-            $email = $data->email;
-            $userId = null;
-        }
-
-        // parent_id > 0 = odpoved na existujici komentar; 0 nebo prazdne = kořenovy
-        $parentId = !empty($data->parent_id) && (int) $data->parent_id > 0
-            ? (int) $data->parent_id
-            : null;
-
-        try {
-            $this->commentFacade->addComment($postId, $userId, $name, $email, trim($data->content), $parentId);
-            $this->flashMessage('Komentář byl přidán.', 'success');
-        } catch (\Exception $e) {
-            $this->flashMessage('Při ukládání komentáře došlo k chybě. Zkuste to prosím znovu.', 'error');
-        }
-
-        if ($this->isAjax()) {
-            $this->redrawControl('commentsArea');
-        } else {
-            $this->redirect('Post:show', $postId);
-        }
+        return $this->commentFormFactory->create($postId);
     }
 
     public function handleBookmark(int $postId): void
@@ -197,23 +132,5 @@ final class PostPresenter extends \App\Presentation\BasePresenter
         } else {
             $this->redirect('this');
         }
-    }
-
-    // zkontroluje opravneni pres Authorizator (RBAC)
-    // iterujeme pres role, protoze uzivatel jich muze mit vic
-    private function isAllowed(string $resource, string $privilege): bool
-    {
-        $user = $this->getUser();
-        if (!$user->isLoggedIn()) {
-            return false;
-        }
-
-        foreach ((array) $user->getRoles() as $role) {
-            if ($this->authorizator->isAllowed($role, $resource, $privilege)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

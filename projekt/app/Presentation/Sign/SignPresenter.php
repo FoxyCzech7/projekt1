@@ -2,19 +2,16 @@
 
 namespace App\Presentation\Sign;
 
-use Nette;
-use Nette\Application\UI\Form;
-use Nette\Security\AuthenticationException;
-use App\Model\Auth\MyAuthenticator;
-use App\Model\Auth\UserManager;
-use App\Model\Auth\DuplicateNameException;
-use App\Model\Auth\DuplicateEmailException;
+use App\Components\SignInForm\ISignInFormControlFactory;
+use App\Components\SignInForm\SignInFormControl;
+use App\Components\RegisterForm\IRegisterFormControlFactory;
+use App\Components\RegisterForm\RegisterFormControl;
 
 final class SignPresenter extends \App\Presentation\BasePresenter
 {
     public function __construct(
-        private MyAuthenticator $authenticator,
-        private UserManager $userManager,
+        private ISignInFormControlFactory $signInFormFactory,
+        private IRegisterFormControlFactory $registerFormFactory,
     ) {}
 
     protected function startup(): void
@@ -37,67 +34,13 @@ final class SignPresenter extends \App\Presentation\BasePresenter
         $this->redirect('Home:');
     }
 
-    protected function createComponentSignInForm(): Form
+    protected function createComponentSignInForm(): SignInFormControl
     {
-        $form = new Form;
-        $form->addText('username', 'Uživatelské jméno:')
-            ->setRequired('Prosím vyplňte své uživatelské jméno.');
-
-        $form->addPassword('password', 'Heslo:')
-            ->setRequired('Prosím vyplňte své heslo.');
-
-        $form->addSubmit('send', 'Přihlásit');
-        $form->onSuccess[] = [$this, 'signInFormSucceeded'];
-        return $form;
+        return $this->signInFormFactory->create();
     }
 
-    public function signInFormSucceeded(Form $form, \stdClass $values): void
+    protected function createComponentRegisterForm(): RegisterFormControl
     {
-        $user = $this->getUser();
-        $user->setAuthenticator($this->authenticator);
-
-        try {
-            $identity = $this->authenticator->authenticate($values->username, $values->password);
-            $user->login($identity);
-            // cas prihlaseni zaznamenavame az po uspesnem login(), kdy mame getId()
-            $this->userManager->updateLastLogin($user->getId());
-            $this->redirect('Home:');
-        } catch (AuthenticationException $e) {
-            // zamerně nezobrazujeme puvodni chybu (neznamy uzivatel vs. spatne heslo),
-            // aby utocnik nemohl zjistit, ktera jmena v systemu existuji
-            $form->addError('Nesprávné přihlašovací údaje.');
-        }
-    }
-
-    protected function createComponentRegisterForm(): Form
-    {
-        $form = new Form;
-        $form->addText('username', 'Uživatelské jméno:')
-            ->setRequired('Zadejte uživatelské jméno.');
-
-        $form->addText('email', 'Email:')
-            ->setRequired('Zadejte email.')
-            ->addRule($form::EMAIL, 'Zadejte platnou emailovou adresu.');
-
-        $form->addPassword('password', 'Heslo:')
-            ->setRequired('Zadejte heslo.');
-
-        $form->addSubmit('send', 'Registrovat');
-        $form->onSuccess[] = [$this, 'registerFormSucceeded'];
-        return $form;
-    }
-
-    public function registerFormSucceeded(Form $form, \stdClass $values): void
-    {
-        try {
-            $this->userManager->registerWithEmail($values->username, $values->email, $values->password);
-            $this->flashMessage('Registrace byla úspěšná. Nyní se můžete přihlásit.');
-            $this->redirect('Sign:in');
-        } catch (DuplicateNameException $e) {
-            // kazda vyjimka = konkretni chybova hlaska bez porovnavani retezcu
-            $form->addError('Toto uživatelské jméno je již použito.');
-        } catch (DuplicateEmailException $e) {
-            $form->addError('Tento email je již registrován.');
-        }
+        return $this->registerFormFactory->create();
     }
 }
