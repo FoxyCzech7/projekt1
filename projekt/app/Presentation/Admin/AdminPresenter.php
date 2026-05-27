@@ -13,6 +13,7 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
     public function __construct(
         private UserProfileFacade $userProfileFacade,
         private FeedImportFacade $feedImportFacade,
+        private string $uploadsDir,
     ) {}
 
     protected function startup(): void
@@ -30,10 +31,8 @@ final class AdminPresenter extends \App\Presentation\BasePresenter
     // Autorem je prihlaseny admin. Cache feedu se po importu vymaze
     public function actionImportFeed(): void
     {
-        $uploadsDir = __DIR__ . '/../../../www/img/posts/';
-
         try {
-            $result = $this->feedImportFacade->importLatestPost($this->getUser()->getId(), $uploadsDir);
+            $result = $this->feedImportFacade->importLatestPost($this->getUser()->getId(), $this->uploadsDir);
             if ($result === 'created') {
                 $this->flashMessage('Příspěvek byl úspěšně importován z feedu.', 'success');
             } else {

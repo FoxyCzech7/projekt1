@@ -2,6 +2,10 @@ services:
     - App\Core\RouterFactory::createRouter
     - App\Model\Auth\UserManager
     - App\Model\Auth\MyAuthorizator
+    -
+        class: App\Presentation\Admin\AdminPresenter
+        arguments:
+            uploadsDir: %uploadsDir%
 
     -
         factory: App\Model\Auth\MyAuthenticator
@@ -10,7 +14,10 @@ services:
     - implement: App\Components\SignInForm\ISignInFormControlFactory
     - implement: App\Components\RegisterForm\IRegisterFormControlFactory
     - implement: App\Components\CommentForm\ICommentFormControlFactory
-    - implement: App\Components\PostForm\IPostFormControlFactory
+    -
+        implement: App\Components\PostForm\IPostFormControlFactory
+        arguments:
+            uploadsDir: %uploadsDir%
     - implement: App\Components\ProfileEditForm\IProfileEditFormControlFactory
     - implement: App\Components\EditForm\IEditFormControlFactory
 

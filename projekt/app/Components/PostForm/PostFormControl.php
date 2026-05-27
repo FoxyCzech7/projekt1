@@ -16,6 +16,7 @@ final class PostFormControl extends Control
         private PremiumFacade $premiumFacade,
         private TagFacade $tagFacade,
         private Authorizator $authorizator,
+        private string $uploadsDir,
         private ?int $postId,
     ) {}
 
@@ -63,9 +64,8 @@ final class PostFormControl extends Control
     public function formSucceeded(Form $form, \stdClass $data): void
     {
         $presenter = $this->getPresenter();
-        $uploadsDir = __DIR__ . '/../../../www/img/posts/';
-        if (!is_dir($uploadsDir)) {
-            mkdir($uploadsDir, 0755, true);
+        if (!is_dir($this->uploadsDir)) {
+            mkdir($this->uploadsDir, 0755, true);
         }
 
         if ($this->postId) {
@@ -79,7 +79,7 @@ final class PostFormControl extends Control
             }
 
             $imagePath = ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk())
-                ? $this->saveImage($data->image, $uploadsDir, $this->postId)
+                ? $this->saveImage($data->image, $this->uploadsDir, $this->postId)
                 : $post->image;
 
             $isPremium = $this->canCreatePremiumPost() && $data->is_premium;
@@ -105,7 +105,7 @@ final class PostFormControl extends Control
                 null, $isPremium, $status, $scheduledAt,
             );
             if ($data->image instanceof \Nette\Http\FileUpload && $data->image->isOk()) {
-                $imagePath = $this->saveImage($data->image, $uploadsDir, $newPost->id);
+                $imagePath = $this->saveImage($data->image, $this->uploadsDir, $newPost->id);
                 $this->postFacade->updatePost($newPost->id, $newPost->title, $newPost->content, $imagePath);
             }
             $this->tagFacade->syncPostTags($newPost->id, $data->tags ?? '');

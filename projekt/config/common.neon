@@ -1,4 +1,5 @@
 parameters:
+    uploadsDir: %wwwDir%/img/posts/
 
 
 application:
