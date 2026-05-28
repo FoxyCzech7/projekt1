@@ -66,16 +66,16 @@ final class ProfileFacade
     // Vrati null pokud uzivatel s danym ID neexistuje
     // Pole is_public urcuje, zda sablona zobrazi plny profil nebo jen username
     // s hlaskou "profil je soukromy"
-    public function getPublicProfile(int $userId): ?object
+    public function getPublicProfile(int $userId): ?array
     {
         $user = $this->database->table('users')->get($userId);
         if (!$user) {
             return null;
         }
-        return (object) [
+        return [
             'id'         => $user->id,
             'username'   => $user->username,
-            'is_public'  => (bool) ($user->is_public ?? true), // vychozi true - stare ucty bez sloupce jsou verejne
+            'is_public'  => (bool) ($user->is_public ?? true),
             'first_name' => $user->first_name ?? null,
             'last_name'  => $user->last_name ?? null,
             'email'      => $user->email ?? null,

@@ -12,33 +12,33 @@ final class UserProfileFacade
 
     // Vrati kompletni profil uzivatele vcetne agregovanych statistik.
     // Vrati null pokud uzivatel s danym ID neexistuje.
-    public function getUserProfile(int $userId): ?object
+    // Statistiky jsou agregované jedním SQL dotazem místo tří separátních.
+    public function getUserProfile(int $userId): ?array
     {
         $user = $this->database->table('users')->get($userId);
         if (!$user) {
             return null;
         }
 
-        // COALESCE zajisti 0 misto NULL pokud uzivatel nema zadne komentare
-        // (SUM vraci NULL pro prazdnou sadu radku)
-        $commentLikes = (int) $this->database->query(
-            'SELECT COALESCE(SUM(likes_count), 0) FROM comments WHERE user_id = ?',
-            $userId
-        )->fetchField();
+        $stats = $this->database->query(
+            'SELECT
+                (SELECT COALESCE(SUM(likes_count), 0) FROM comments WHERE user_id = ?) AS comment_likes,
+                (SELECT COUNT(*) FROM posts    WHERE user_id = ?) AS post_count,
+                (SELECT COUNT(*) FROM comments WHERE user_id = ?) AS comment_count',
+            $userId, $userId, $userId
+        )->fetch();
 
-        return (object) [
-            'id' => $user->id,
-            'username' => $user->username,
-            'email' => $user->email ?? '',
-            'role' => $user->role,
-            // sloupce first_name, last_name, last_login jsou volitelne -
-            // existuji jen pokud byla spustena prislusna DB migrace
-            'first_name' => isset($user->first_name) ? $user->first_name : null,
-            'last_name' => isset($user->last_name) ? $user->last_name : null,
-            'last_login' => isset($user->last_login) ? $user->last_login : null,
-            'comment_likes' => $commentLikes,
-            'post_count' => $this->database->table('posts')->where('user_id', $userId)->count('*'),
-            'comment_count' => $this->database->table('comments')->where('user_id', $userId)->count('*'),
+        return [
+            'id'           => $user->id,
+            'username'     => $user->username,
+            'email'        => $user->email ?? '',
+            'role'         => $user->role,
+            'first_name'   => $user->first_name ?? null,
+            'last_name'    => $user->last_name ?? null,
+            'last_login'   => $user->last_login ?? null,
+            'comment_likes'=> (int) $stats->comment_likes,
+            'post_count'   => (int) $stats->post_count,
+            'comment_count'=> (int) $stats->comment_count,
         ];
     }
 
