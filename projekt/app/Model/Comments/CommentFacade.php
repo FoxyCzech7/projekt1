@@ -139,9 +139,9 @@ final class CommentFacade
         }
     }
 
-    // Vrati mnozinu ID komentaru, ktere dany uzivatel lajknul - pro zobrazeni stavu tlacitka v sablone.
-    public function getUserLikedCommentIds(int $userId): array
+    // Vrati mnozinu ID komentaru, ktere dany uzivatel lajknul v danem prispevku.
+    public function getUserLikedCommentIds(int $userId, int $postId): array
     {
-        return $this->commentLikesRepository->getUserLikedCommentIds($userId);
+        return $this->commentLikesRepository->getUserLikedCommentIds($userId, $postId);
     }
 }

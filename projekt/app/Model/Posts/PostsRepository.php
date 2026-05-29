@@ -72,6 +72,18 @@ class PostsRepository extends BaseRepository
         return $this->getTable()->get($id);
     }
 
+    // Najde prispevek vcetne dat autora jednim JOIN dotazem - eliminuje extra SELECT z ref()
+    public function findByIdWithAuthor(int $id): ?\Nette\Database\Row
+    {
+        return $this->database->query(
+            'SELECT posts.*, users.username AS author_username, users.id AS author_id
+             FROM posts
+             LEFT JOIN users ON users.id = posts.user_id
+             WHERE posts.id = ?',
+            $id
+        )->fetch() ?: null;
+    }
+
     // Prepise findAll() z BaseRepository - prida vychozi razeni od nejnovejsiho
     public function findAll(): Selection
     {

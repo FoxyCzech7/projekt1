@@ -43,12 +43,18 @@ abstract class BasePresenter extends Presenter
         $session = $this->getSession('newsletter');
         $subscribedEmail = $session->email ?? null;
 
+        // DB dotaz jen jednou za 5 minut a jen pokud v session neni email
+        // checkedAt zajistuje ze i negativni vysledek (neni subscriber) se cachuji
         if ($subscribedEmail === null && $this->getUser()->isLoggedIn()) {
-            $identity  = $this->getUser()->getIdentity();
-            $userEmail = $identity ? ($identity->email ?? null) : null;
-            if ($userEmail && $this->newsletterFacade->isSubscribed($userEmail)) {
-                $subscribedEmail = $userEmail;
-                $session->email  = $userEmail; // ulozi do session, aby se DB nedotazovala pri kazdem requestu
+            $checkedAt = $session->checkedAt ?? 0;
+            if ((time() - $checkedAt) > 300) {
+                $identity  = $this->getUser()->getIdentity();
+                $userEmail = $identity ? ($identity->email ?? null) : null;
+                if ($userEmail && $this->newsletterFacade->isSubscribed($userEmail)) {
+                    $subscribedEmail = $userEmail;
+                    $session->email  = $userEmail;
+                }
+                $session->checkedAt = time();
             }
         }
 

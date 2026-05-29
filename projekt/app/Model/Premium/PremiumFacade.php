@@ -17,8 +17,8 @@ final class PremiumFacade
     private function fetchUntil(int $userId): ?\DateTimeInterface
     {
         if (!array_key_exists($userId, $this->cache)) {
-            $user  = $this->database->table('users')->get($userId);
-            $until = $user ? ($user->premium_until ?? null) : null;
+            $row   = $this->database->table('users')->select('premium_until')->where('id', $userId)->fetch();
+            $until = $row ? ($row->premium_until ?? null) : null;
             $this->cache[$userId] = $until instanceof \DateTimeInterface ? $until : null;
         }
         return $this->cache[$userId];

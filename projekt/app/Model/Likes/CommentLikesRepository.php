@@ -24,11 +24,14 @@ class CommentLikesRepository extends BaseRepository
             ->fetch();
     }
 
-    // Vrati mnozinu ID komentaru, ktere dany uzivatel lajknul
-    public function getUserLikedCommentIds(int $userId): array
+    // Vrati mnozinu ID komentaru, ktere dany uzivatel lajknul — pouze pro komentare daneho prispevku
+    public function getUserLikedCommentIds(int $userId, int $postId): array
     {
-        return $this->getTable()
-            ->where('user_id', $userId)
-            ->fetchPairs('comment_id', 'comment_id');
+        return $this->database->query(
+            'SELECT cl.comment_id FROM comment_likes cl
+             JOIN comments c ON c.id = cl.comment_id
+             WHERE cl.user_id = ? AND c.post_id = ?',
+            $userId, $postId
+        )->fetchPairs('comment_id', 'comment_id');
     }
 }

@@ -46,6 +46,12 @@ final class PostFacade
         return $this->postsRepository->findById($id);
     }
 
+    // Najde prispevek vcetne dat autora jednim dotazem (author_username, author_id)
+    public function findByIdWithAuthor(int $id): ?\Nette\Database\Row
+    {
+        return $this->postsRepository->findByIdWithAuthor($id);
+    }
+
     // Najde prispevek podle presneho nazvu - pouziva se pro detekci duplikatu pri importu
     public function findByTitle(string $title): ?ActiveRow
     {

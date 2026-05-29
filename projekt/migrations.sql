@@ -55,6 +55,10 @@ CREATE TABLE IF NOT EXISTS post_revisions (
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
+-- Výkonnostní indexy
+ALTER TABLE posts     ADD INDEX IF NOT EXISTS idx_status_created (status, created_at);
+ALTER TABLE comments  ADD INDEX IF NOT EXISTS idx_created_at     (created_at);
+
 -- Newsletter odběratelé
 CREATE TABLE IF NOT EXISTS newsletter_subscribers (
     id         INT AUTO_INCREMENT PRIMARY KEY,

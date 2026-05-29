@@ -39,12 +39,15 @@ final class PostPresenter extends \App\Presentation\BasePresenter
 
     public function renderShow(int $id): void
     {
-        $post = $this->postFacade->findById($id);
+        $post = $this->postFacade->findByIdWithAuthor($id);
         if (!$post) {
             $this->error('Příspěvek nebyl nalezen.');
         }
         $this->template->post = $post;
-        $this->template->postAuthor = $post->ref('users', 'user_id');
+        $this->template->postAuthor = $post->author_id ? (object) [
+            'id'       => $post->author_id,
+            'username' => $post->author_username,
+        ] : null;
         $this->postFacade->incrementViews($id);
         $this->template->readingTime = PostFacade::readingTime($post->content);
         $this->template->tags = $this->tagFacade->getPostTags($id);
@@ -64,7 +67,7 @@ final class PostPresenter extends \App\Presentation\BasePresenter
             // pro post predavame [$id] - pole s jednim prvkem, aby getUserLikedPostIds
             // mohlo pouzit stejnou cestu kodu jako na homepage (kde je jich vice)
             $userHasLiked = $this->postFacade->getUserLikedPostIds($userId, [$id]);
-            $userHasLikedComments = $this->commentFacade->getUserLikedCommentIds($userId);
+            $userHasLikedComments = $this->commentFacade->getUserLikedCommentIds($userId, $id);
         }
         $this->template->userHasLiked = $userHasLiked;
         $this->template->userHasLikedComments = $userHasLikedComments;
